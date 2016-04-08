@@ -1,0 +1,14 @@
+key value pair 
+344_a1.pem
+
+public DNS
+http://ec2-52-38-84-159.us-west-2.compute.amazonaws.com/
+
+instance ID
+
+
+screwed up and used AMAZON AMI instead of SUSE so it didn't work 
+"sudo su" to get root access
+"chmod -R 777 ." to get write permissions, to upload files 
+
+S3 is good for large data that does not change often, more on read requests
