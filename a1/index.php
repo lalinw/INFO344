@@ -11,8 +11,9 @@
     <input type="submit" value="Submit">
 </form>
 <br>
-<?php 
-    //echo "hello world in php";
+<?php
+    require 'classPlayer.php';
+    //use require instead of include; stops if the class does not exist
     
     
     //connecting to the DB in RDS
@@ -23,22 +24,42 @@
     if(isset($_REQUEST['search'])) {
         $playerSearch = $_REQUEST['search']; //will throw error when load, because no input yet
         
-        echo '<br> You have searched '.$playerSearch.'<br>';
-        //the query part? 
-        //$stmt = $conn->query("SELECT * FROM player_stats WHERE Name = 'Stephen Curry'")->fetchAll(PDO::FETCH_ASSOC);
+        echo '<br> You searched <b>'.$playerSearch.'</b><br><br>';
 
-        $sql = "
-            SELECT Name 
+        $sql = "SELECT * 
             FROM player_stats 
             WHERE Name LIKE '%".$playerSearch."%'";
+            
         $result = $conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
-        //show query    
-        for($i = 0; $i < count($result); $i++) {
-            echo $result[$i]['Name']."<br>";
-        }
+        //create object from query    
         if (count($result) <= 0 ){
             echo "No results to display";
+        } else {
+            $resultPlayerArray = array();   //array of Player objects
+            for($i = 0; $i < count($result); $i++) {
+                //Player($name, $team, $ppg, $THptm, $reb, $ast, $stl, $blk, $to)
+                //creates new Player object and pushes to array
+                $plyr = new Player(
+                    $result[$i]['Name'],
+                    $result[$i]['Team'],
+                    $result[$i]['PPG'],
+                    $result[$i]['M_3PT'], //3pt made
+                    $result[$i]['Rebounds_Tot'],
+                    $result[$i]['Ast'],
+                    $result[$i]['Stl'],
+                    $result[$i]['Blk'],
+                    $result[$i]['TO']);
+                array_push($resultPlayerArray, $plyr);
+            }
+            for($i = 0; $i < count($resultPlayerArray); $i++) {
+                echo $resultPlayerArray[$i]->getName();
+                echo "<br>";
+                echo $resultPlayerArray[$i]->getTeam();
+                echo "<br>";
+                echo "PPG: ".$resultPlayerArray[$i]->getPpg()."/ Assist: ".$resultPlayerArray[$i]->getAst();
+                echo "<br><br>";
+            }
         }
     }
     

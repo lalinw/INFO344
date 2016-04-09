@@ -12,3 +12,9 @@ screwed up and used AMAZON AMI instead of SUSE so it didn't work
 "chmod -R 777 ." to get write permissions, to upload files 
 
 S3 is good for large data that does not change often, more on read requests
+
+import csv file to local phpmyadmin
+edit phpmyadlmin config file to connect to RDS
+connect to RDS and connect the EC2 to RDS using PHP
+
+query the DB using SQL called with PHP
