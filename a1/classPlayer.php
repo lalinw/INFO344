@@ -2,11 +2,11 @@
     class Player {
     //php, default is public
     
-        function Player($name, $team, $ppg, $THptm, $reb, $ast, $stl, $blk, $turnover) {
+        function Player($name, $team, $ppg, $m3pt, $reb, $ast, $stl, $blk, $turnover) {
             $this->name = $name;
             $this->team = $team;
             $this->ppg = $ppg; 
-            $this->THptm = $THptm;
+            $this->m3pt = $m3pt;
             $this->reb = $reb;
             $this->ast = $ast;
             $this->stl = $stl;
@@ -26,8 +26,8 @@
             return $this->ppg;     
         }
         
-        public function getTHptm() {
-            return $this->THptm;     
+        public function getm3pt() {
+            return $this->m3pt;     
         }
         
         public function getreb() {
