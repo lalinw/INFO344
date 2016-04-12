@@ -104,6 +104,7 @@ div.playerTeam {
     padding-bottom: 10px; 
     text-align: center;
     margin:auto;
+    margin-bottom: 5px;
 }
 
 .box.ppg {
@@ -113,3 +114,4 @@ div.playerTeam {
 .box.gp {
     background-color: darkblue;
 }
+
