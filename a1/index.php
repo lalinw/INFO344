@@ -1,24 +1,18 @@
 <?php
     require 'classPlayer.php';  //use require instead of include; stops if the class does not exist
-    
-   
-
     if(isset($_GET['search']) && $_GET['search'] != "") {
         $playerSearch = $_REQUEST['search'];
          //connecting to the DB in RDS
         $conn = new PDO('mysql:host=nba-db.c6uuvnaayrmz.us-west-2.rds.amazonaws.com:3306;dbname=nbadb', 'info344user', '344password'); 
         //check connection
         $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        //prepare SQL statement 
-        // $sql = "SELECT * 
-        //     FROM player_stats 
-        //     WHERE Name LIKE '%".$playerSearch."%'";
+
         $sql = "SELECT * 
             FROM player_stats 
-            WHERE Name LIKE '%".$playerSearch."%'";
+            WHERE Name LIKE '".$playerSearch."'
+                OR levenshtein('".$playerSearch."', FirstName) BETWEEN 0 AND 2
+                OR levenshtein('".$playerSearch."', LastName) BETWEEN 0 AND 2";
         $result = $conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);   //query the db
-        // echo "Hello world";
-        //     die();
 
         //create object from query    
         if (count($result) <= 0 ){
@@ -47,14 +41,12 @@
             
         }
     }
-
-
-
 ?>
+
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Document</title>
+    <title>NBA Player Search</title>
     
     <link rel="stylesheet" type="text/css" href="main.css">
     <script src="jquery-1.12.0.min.js"></script>
@@ -77,140 +69,86 @@
     </div>
     <div class="search" id="searchResponse">
     <?php
-            //require 'search.php'
-            if(isset($resultPlayerArray)) {
-                for($i = 0; $i < count($resultPlayerArray); $i++) {       
-                    //get player photo + info
-                    $nm = $resultPlayerArray[$i]->getName();
-                    $temp = explode(" ", $nm);
-                    $nm1 = str_replace(".", "", strtolower($temp[0]));
-                    $nm2 = strtolower($temp[1]);
-                    //each namecard
-                    echo "<div class='playerResult'>";
-                        echo "<div class='profileImg'>";
-                            echo "<img class='profilepic' itemprop='image' 
-                                src='http://i.cdn.turner.com/nba/nba/.element/img/2.0/sect/statscube/players/large/".$nm1."_".$nm2.".png' 
-                                onerror=\"this.onerror=null;"."this.src='http://i.cdn.turner.com/nba/nba/.element/img/2.0/sect/statscube/players/large/default_nba_headshot_v2.png';\".
-                                >";
-                        echo "</div>";    
-                        echo "<div class='playerName'>";    
-                            echo $resultPlayerArray[$i]->getName();
-                        echo "</div>";        
-                        echo "<div class='playerTeam'>";
-                            echo $resultPlayerArray[$i]->getTeam();
-                        echo "</div>";
-                        
-                        echo "<div class='playerInfo'>";
-                            // column 1
-                            echo "<div class='col1'>";
-                                echo "<div class='statName'>";
-                                    echo "Ast:<br>Stl:<br>Blk:<br>TO:";
-                                echo "</div>";
-                                echo "<div class='stats'>";
-                                    echo $resultPlayerArray[$i]->getAst().
-                                    "<br>".
-                                    $resultPlayerArray[$i]->getStl().
-                                    "<br>".
-                                    $resultPlayerArray[$i]->getBlk().
-                                    "<br>".
-                                    $resultPlayerArray[$i]->getTurnover();
-                                echo "</div>";
-                            echo "</div>";
-                            //column 2
-                            echo "<div class='col2'>";
-                                echo "<div class='statName'>";
-                                    echo "Rebounds:<br><br>3pt:<br>FG:<br>FT:";
-                                echo "</div>";
-                                echo "<div class='stats'>";
-                                    $temp = $resultPlayerArray[$i]->getReb();
-                                    echo "Off ".$temp[0]."/Def ".$temp[1].
-                                        "<br>".
-                                        "Total ".$temp[2]."<br>";
-                                    $temp = $resultPlayerArray[$i]->getPt3();
-                                    echo $temp[0]." (".$temp[2]."%)"."<br>";
-                                    $temp = $resultPlayerArray[$i]->getFg();
-                                    echo $temp[0]." (".$temp[2]."%)"."<br>";
-                                    $temp = $resultPlayerArray[$i]->getFt();
-                                    echo $temp[0]." (".$temp[2]."%)";
-                                echo "</div>";
-                                
-                            echo "</div>";  
-                            
-                            //column 3
-                            echo "<div class='col3'>";
-                                echo "PPG";
-                                echo "<div class='box ppg'>".$resultPlayerArray[$i]->getPpg()."</div>";
-                                echo "GP";
-                                echo "<div class='box gp'>".$resultPlayerArray[$i]->getGp()."</div>";
-                                echo "<div class='statName'>";
-                                    echo "Min:";
-                                echo "</div>";
-                                echo "<div class='stats'>";
-                                    echo $resultPlayerArray[$i]->getMin();
-                                echo "</div>";
-                            echo "</div>";  
-                        echo "</div>";        
-                        
+        
+        if(isset($resultPlayerArray)) {
+            for($i = 0; $i < count($resultPlayerArray); $i++) {       
+                //get player photo + info
+                $nm = $resultPlayerArray[$i]->getName();
+                $temp = explode(" ", $nm);
+                $nm1 = str_replace(".", "", strtolower($temp[0]));
+                $nm2 = strtolower($temp[1]);
+                //each namecard
+                echo "<div class='playerResult'>";
+                    echo "<div class='profileImg'>";
+                        echo "<img class='profilepic' itemprop='image' 
+                            src='http://i.cdn.turner.com/nba/nba/.element/img/2.0/sect/statscube/players/large/".$nm1."_".$nm2.".png' 
+                            onerror=\"this.onerror=null;"."this.src='http://i.cdn.turner.com/nba/nba/.element/img/2.0/sect/statscube/players/large/default_nba_headshot_v2.png';\".
+                            >";
+                    echo "</div>";    
+                    echo "<div class='playerName'>";    
+                        echo $resultPlayerArray[$i]->getName();
+                    echo "</div>";        
+                    echo "<div class='playerTeam'>";
+                        echo $resultPlayerArray[$i]->getTeam();
                     echo "</div>";
-                }
+                    
+                    echo "<div class='playerInfo'>";
+                        // column 1
+                        echo "<div class='col1'>";
+                            echo "<div class='statName'>";
+                                echo "Ast:<br>Stl:<br>Blk:<br>TO:";
+                            echo "</div>";
+                            echo "<div class='stats'>";
+                                echo $resultPlayerArray[$i]->getAst().
+                                "<br>".
+                                $resultPlayerArray[$i]->getStl().
+                                "<br>".
+                                $resultPlayerArray[$i]->getBlk().
+                                "<br>".
+                                $resultPlayerArray[$i]->getTurnover();
+                            echo "</div>";
+                        echo "</div>";
+                        //column 2
+                        echo "<div class='col2'>";
+                            echo "<div class='statName'>";
+                                echo "Rebounds:<br><br>3pt:<br>FG:<br>FT:";
+                            echo "</div>";
+                            echo "<div class='stats'>";
+                                $temp = $resultPlayerArray[$i]->getReb();
+                                echo "Off ".$temp[0]."/Def ".$temp[1].
+                                    "<br>".
+                                    "Total ".$temp[2]."<br>";
+                                $temp = $resultPlayerArray[$i]->getPt3();
+                                echo $temp[0]." (".$temp[2]."%)"."<br>";
+                                $temp = $resultPlayerArray[$i]->getFg();
+                                echo $temp[0]." (".$temp[2]."%)"."<br>";
+                                $temp = $resultPlayerArray[$i]->getFt();
+                                echo $temp[0]." (".$temp[2]."%)";
+                            echo "</div>";
+                            
+                        echo "</div>";  
+                        
+                        //column 3
+                        echo "<div class='col3'>";
+                            echo "PPG";
+                            echo "<div class='box ppg'>".$resultPlayerArray[$i]->getPpg()."</div>";
+                            echo "GP";
+                            echo "<div class='box gp'>".$resultPlayerArray[$i]->getGp()."</div>";
+                            echo "<div class='statName'>";
+                                echo "Min:";
+                            echo "</div>";
+                            echo "<div class='stats'>";
+                                echo $resultPlayerArray[$i]->getMin();
+                            echo "</div>";
+                        echo "</div>";  
+                    echo "</div>";        
+                    
+                echo "</div>";
             }
+        }
     ?>
     </div>
-
-<!--<script>
-    function search() {
-        if(window.XMLHttpRequest) {
-            xmlhttp = new XMLHttpRequest();
-        } else {
-            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-        }
-        xmlhttp.onreadystatechange = function() {
-            if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                document.getElementById("searchResponse").innerHTML = xmlhttp.responseText; 
-            }
-        };
-        //add the location URL thingy aws.com/?search=xxxx ??
-        xmlhttp.open("GET","url ****", true);
-        xmlhttp.send();
-    }
-
-</script>-->
-
 </body>
 </html>
 
-
-<?php
-    // $playerSearch = $_GET['search'];
-
-    // //copied from w3schools
-    // $con = mysqli_connect('localhost','peter','abc123','my_db');
-    // if (!$con) {
-    //     die('Could not connect: ' . mysqli_error($con));
-    // }
-
-    // mysqli_select_db($con,"ajax_demo");
-    // $sql="SELECT * FROM user WHERE id = '".$q."'";
-    // $result = mysqli_query($con,$sql);
-
-    // echo "<table>
-    // <tr>
-    // <th>Firstname</th>
-    // <th>Lastname</th>
-    // <th>Age</th>
-    // <th>Hometown</th>
-    // <th>Job</th>
-    // </tr>";
-    // while($row = mysqli_fetch_array($result)) {
-    //     echo "<tr>";
-    //     echo "<td>" . $row['FirstName'] . "</td>";
-    //     echo "<td>" . $row['LastName'] . "</td>";
-    //     echo "<td>" . $row['Age'] . "</td>";
-    //     echo "<td>" . $row['Hometown'] . "</td>";
-    //     echo "<td>" . $row['Job'] . "</td>";
-    //     echo "</tr>";
-    // }
-    // echo "</table>";
-    // mysqli_close($con);
-?>
 
