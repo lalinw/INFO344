@@ -9,15 +9,13 @@
 
         $sql = "SELECT * 
             FROM player_stats 
-            WHERE Name LIKE '".$playerSearch."'
+            WHERE levenshtein('".$playerSearch."', Name) BETWEEN 0 AND 4
                 OR levenshtein('".$playerSearch."', FirstName) BETWEEN 0 AND 2
                 OR levenshtein('".$playerSearch."', LastName) BETWEEN 0 AND 2";
         $result = $conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);   //query the db
 
         //create object from query    
-        if (count($result) <= 0 ){
-            echo "No results to display";
-        } else {
+        if (count($result) > 0) {
             $resultPlayerArray = array();   //array of Player objects
             
             for($i = 0; $i < count($result); $i++) {
@@ -62,8 +60,10 @@
     <div class="search" id="searchFeedback">
         <?php
             if(isset($_GET['search']) && $_GET['search'] != "") {
-    //user form input 
                 echo 'You searched \'<b>'.$playerSearch.'\'</b>'; //some user feedback
+            }
+            if (count($result) <= 0 ){
+                echo "<br>No results to display";
             }
         ?>
     </div>
