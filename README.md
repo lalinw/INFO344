@@ -1,6 +1,6 @@
 # INFO344
 **Assignment #01**
-NBA Player Search [Link] (ec2-52-38-84-159.us-west-2.compute.amazonaws.com)
+NBA Player Search [ec2-52-38-84-159.us-west-2.compute.amazonaws.com]
 
 Hosted on AWS, RDS;
 in PHP, Javascript, HTML/CSS;
