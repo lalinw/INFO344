@@ -62,7 +62,7 @@
             if(isset($_GET['search']) && $_GET['search'] != "") {
                 echo 'You searched \'<b>'.$playerSearch.'\'</b>'; //some user feedback
             }
-            if (count($result) <= 0 ){
+            if ($_GET['search'] != "" && count($result) <= 0 ){
                 echo "<br>No results to display";
             }
         ?>
