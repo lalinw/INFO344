@@ -1,0 +1,2 @@
+C:\XAMPP\htdocs\INFO344\a2\WebApplication1\WebApplication1\obj\Debug\WebApplication1.csprojResolveAssemblyReference.cache
+C:\XAMPP\htdocs\INFO344\a2\WebApplication1\WebApplication1\obj\Debug\WebApplication1.csproj.App.config
