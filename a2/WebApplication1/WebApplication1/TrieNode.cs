@@ -16,9 +16,5 @@ namespace WebApplication1
             this.dict = new Dictionary<char, TrieNode>();
         }
 
-        //empty TrieNode, just in case constructor
-        public TrieNode() {
-            this(null, null);
-        }
     }
 }

@@ -1,1 +1,1 @@
-﻿<%@ WebService Language="C#" CodeBehind="getQuerySuggestions.asmx.cs" Class="WebApplication1.WebService1" %>
+﻿<%@ WebService Language="C#" CodeBehind="getQuerySuggestions.asmx.cs" Class="WebApplication1.getQuerySuggestions" %>
