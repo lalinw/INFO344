@@ -24,8 +24,7 @@ namespace WebApplication1
     {
 
         public static TrieTree trie = new TrieTree();
-        public string filePath = "C:\\Users\\iGuest\\Desktop\\localTrie\\testBIG.txt";
-        //System.IO.Path.GetTempPath() + "\\titles_cleaned_testfile.txt";
+        public string filePath = System.IO.Path.GetTempPath() + "\\titles_cleaned.txt";
 
         [WebMethod]
         public void downloadTitles()
@@ -66,12 +65,12 @@ namespace WebApplication1
                     trie.addTitle(line);
                     line = file.ReadLine();
                     counter++;
-                    if (counter % 1000 == 0 && ramAvailable.NextValue() == 50)
+                    if (counter % 1000 == 0 && ramAvailable.NextValue() < 50) //check for RAM
                     {
                         break;
                     }
                 }
-                status = line + " " + counter;
+                status = line + " " + counter;  //just a report for the user, remove later
             }
             return status;
         }
