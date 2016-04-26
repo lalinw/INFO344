@@ -30,8 +30,6 @@ namespace WebApplication1
         [WebMethod]
         public void downloadTitles()
         {
-            //download titles.txt to blob
-
             // Parse the connection string and return a reference to the storage account.
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(
                 CloudConfigurationManager.GetSetting("StorageConnectionString"));
@@ -51,7 +49,6 @@ namespace WebApplication1
             {
                 blockBlob.DownloadToStream(fileStream);
             }
-
         }
 
         [WebMethod]
@@ -78,12 +75,6 @@ namespace WebApplication1
             }
             return status;
         }
-        //add the check for memory
-        // while (file.hasNextLine()) {
-        // string line = file.nextLine();
-        // addTitle(line);
-
-        //  }
 
         
         //returns the Node pointer to the end of the prefix node 
@@ -100,10 +91,8 @@ namespace WebApplication1
                     temp = temp.dict[x];
                 }
                 else {
-
-                    //has nothing to suggest
+                    //has nothing to suggest, list will be empty; 
                     return suggestions;
-                    //return empty list
                 }
             }
             //now the pointer is at the node of the last character            
@@ -116,12 +105,11 @@ namespace WebApplication1
                 //check if there's anything to recurse through 
                 return suggestions;
             }
-
             //DFS recurse through the trie
             return searchHelper(prefix, temp, suggestions);
-            
         }
 
+        //returns a string of <= 10 suggested titles
         public List<string> searchHelper(string prefix, TrieNode curr, List<string> suggestions) {
             if (suggestions.Count >= 10)
             {
@@ -145,14 +133,6 @@ namespace WebApplication1
                 }
                 return suggestions;
             }
-        }
-
-        [WebMethod]
-        public char testing() {
-            TrieNode curr = trie.overallRoot;
-            TrieNode curr2 = curr.dict['a'];
-            
-            return curr2.data;
         }
 
 

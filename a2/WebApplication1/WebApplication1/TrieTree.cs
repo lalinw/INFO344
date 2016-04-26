@@ -7,13 +7,11 @@ namespace WebApplication1
 {
     public class TrieTree {
 
-        //private Scanner console; //needs something to scan the file with 
-        public TrieNode overallRoot;
+        public TrieNode overallRoot { get; private set; }
 
         public TrieTree() {
-            this.overallRoot = new TrieNode('.', false); //what to put for the first node
+            this.overallRoot = new TrieNode('.', false);
             //creates a blank TrieNode 
-            //console = new Scanner(System.in);
         }
 
 
@@ -36,7 +34,6 @@ namespace WebApplication1
                 else
                 {
                     //if the character doesn't exist, create a new key of this character
-
                     if (i == (title.Length - 1))
                     { //last character in the title
                         valueNode = new TrieNode(key, true);
