@@ -61,7 +61,7 @@ namespace WebApplication1
                     counter++;
                     if (counter % 1000 == 0) 
                     {
-                        if (ramAvailable.NextValue() < 50)
+                        if (ramAvailable.NextValue() < 500)
                         {
                             break;
                         }
@@ -79,6 +79,9 @@ namespace WebApplication1
         public string searchForPrefix(string prefix)
         {
             List<string> suggestions = new List<string>();
+            if (prefix.Equals("")) {
+                return new JavaScriptSerializer().Serialize(suggestions);
+            }
             TrieNode temp = trie.overallRoot;
             for (int i = 0; i < prefix.Length; i++)
             {

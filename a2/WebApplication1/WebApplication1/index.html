@@ -4,23 +4,28 @@
     <title>Query Suggestions</title>
 	<meta charset="utf-8" />
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="style.css" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
 
     <script>
         function sendReq(prf) {
             console.log('ready');
-            var word = $('#searchbar').val();
-            console.log(word);
-            console.log("prf = " + prf);
             $.ajax({
                 type: "POST",
                 url: "getQuerySuggestions.asmx/searchForPrefix",
-                data: JSON.stringify({ prefix: word }),
+                data: JSON.stringify({ prefix: prf }),
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
                 success: function (result) {
                     console.log('success');
-                    $('#res').text(result.d);
+                    $('#res').html(""); //clears the div 
+                    var obj = JSON.parse(result.d);
+                    var block = $("<div>").addClass("sblock");           
+                    // iterate over the array and build the list
+                    for (var i = 0; i < obj.length; i++) {
+                        block.append("<div>" + obj[i] + "</div>");
+                    }
+                    $("#res").append(block);
                 },
                 error: function (msg) {
                     console.log('error');
@@ -30,22 +35,19 @@
 
         $(document).ready(function () {
             $('#searchbar').on('input', function () {
-                console.log("onchange " + this.value);
                 sendReq(this.value);
             });
         });
+
     </script>
 
 </head>
 <body>
-    <div>
+    <div id="maincontent">
+        <h2>Wikipedia Articles Search</h2>
         <input id="searchbar" type="text"/>
-        <button id="findbutton" onclick="sendReq();">Find!</button>
     </div>
     <div id="res"></div>
-    <div>
-        <!-- feedback for when can't find suggestion -->
 
-    </div>
 </body>
 </html>
