@@ -1,0 +1,17 @@
+﻿body {
+}
+
+#maincontent {
+    text-align: center;
+    margin-top: 30%;
+}
+
+input {
+    width: 50%;
+}
+
+
+#res {
+    width: 50%;
+    margin-left: 25%;
+}

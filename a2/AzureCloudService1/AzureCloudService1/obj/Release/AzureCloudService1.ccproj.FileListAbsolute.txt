@@ -63,4 +63,5 @@ Z:\Desktop\INFO344\a2\AzureCloudService1\AzureCloudService1\obj\Release\WebRole1
 Z:\Desktop\INFO344\a2\AzureCloudService1\AzureCloudService1\obj\Release\WebRole1\getQuerySuggestions.asmx
 Z:\Desktop\INFO344\a2\AzureCloudService1\AzureCloudService1\obj\Release\WebRole1\index.html
 Z:\Desktop\INFO344\a2\AzureCloudService1\AzureCloudService1\obj\Release\WebRole1\packages.config
+Z:\Desktop\INFO344\a2\AzureCloudService1\AzureCloudService1\obj\Release\WebRole1\style.css
 Z:\Desktop\INFO344\a2\AzureCloudService1\AzureCloudService1\obj\Release\WebRole1\Web.config
