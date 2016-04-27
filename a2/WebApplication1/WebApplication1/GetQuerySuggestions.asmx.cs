@@ -9,6 +9,8 @@ using Microsoft.WindowsAzure.Storage; // Namespace for CloudStorageAccount
 using Microsoft.WindowsAzure.Storage.Blob; // Namespace for Blob storage types
 using System.IO;
 using System.Diagnostics;
+using System.Web.Script.Services;
+using System.Web.Script.Serialization;
 
 namespace WebApplication1
 {
@@ -34,15 +36,7 @@ namespace WebApplication1
                 CloudConfigurationManager.GetSetting("StorageConnectionString"));
             CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
             CloudBlobContainer container = blobClient.GetContainerReference("helloblob");
-            CloudBlockBlob blockBlob = container.GetBlockBlobReference("titles_cleaned.txt");
-
-            //string text;
-            //using (var memoryStream = new MemoryStream())
-            //{
-            //    blockBlob.DownloadToStream(memoryStream);
-            //    text = System.Text.Encoding.UTF8.GetString(memoryStream.ToArray());
-            //    Console.WriteLine(text);
-            //}
+            CloudBlockBlob blockBlob = container.GetBlockBlobReference("titles_cleaned_testfile.txt");
 
             using (var fileStream = System.IO.File.OpenWrite(filePath))
             {
@@ -65,9 +59,12 @@ namespace WebApplication1
                     trie.addTitle(line);
                     line = file.ReadLine();
                     counter++;
-                    if (counter % 1000 == 0 && ramAvailable.NextValue() < 50) //check for RAM
+                    if (counter % 1000 == 0) 
                     {
-                        break;
+                        if (ramAvailable.NextValue() < 50)
+                        {
+                            break;
+                        }
                     }
                 }
                 status = line + " " + counter;  //just a report for the user, remove later
@@ -78,7 +75,8 @@ namespace WebApplication1
         
         //returns the Node pointer to the end of the prefix node 
         [WebMethod]
-        public List<string> searchForPrefix(string prefix)
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public string searchForPrefix(string prefix)
         {
             List<string> suggestions = new List<string>();
             TrieNode temp = trie.overallRoot;
@@ -91,7 +89,7 @@ namespace WebApplication1
                 }
                 else {
                     //has nothing to suggest, list will be empty; 
-                    return suggestions;
+                    return new JavaScriptSerializer().Serialize(suggestions);
                 }
             }
             //now the pointer is at the node of the last character            
@@ -102,10 +100,11 @@ namespace WebApplication1
             if (temp.dict.Count == 0)
             {
                 //check if there's anything to recurse through 
-                return suggestions;
+                return new JavaScriptSerializer().Serialize(suggestions);
             }
             //DFS recurse through the trie
-            return searchHelper(prefix, temp, suggestions);
+            List<string> result = searchHelper(prefix, temp, suggestions);
+            return new JavaScriptSerializer().Serialize(result);
         }
 
         //returns a string of <= 10 suggested titles
@@ -133,8 +132,6 @@ namespace WebApplication1
                 return suggestions;
             }
         }
-
-
 
     }
 }
