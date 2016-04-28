@@ -103,15 +103,15 @@ namespace WebRole1
                 }
             }
             //pointer is at the node of the last character            
-            if (temp.EOF == true)
-            {
-                suggestions.Add("");
-            }
-            if (temp.dict.Count == 0)
-            {
+           // if (temp.EOF == true)
+            //{
+            //    suggestions.Add("");
+           // }
+            //if (temp.dict.Count == 0)
+           // {
                 //check if there's anything to recurse through 
-                return new JavaScriptSerializer().Serialize(suggestions);
-            }
+            //    return new JavaScriptSerializer().Serialize(suggestions);
+           // }
             //DFS recurse through the trie
             List<string> result = searchHelper("", temp, suggestions);
             return new JavaScriptSerializer().Serialize(result);
@@ -126,7 +126,7 @@ namespace WebRole1
             {
                 return suggestions;
             }
-            else if (curr.dict.Count == 0 && curr.EOF)
+            else if (curr.dict.Count == 0)
             {
                 suggestions.Add(prefix + curr.data);
                 return suggestions;
