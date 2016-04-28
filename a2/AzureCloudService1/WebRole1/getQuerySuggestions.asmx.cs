@@ -81,8 +81,9 @@ namespace WebRole1
         //post: prepare the pointer to call the helper method
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public string searchForPrefix(string prefix)
+        public string searchForPrefix(string input)
         {
+            string prefix = input.Trim().ToLower();
             List<string> suggestions = new List<string>();
             if (prefix.Equals(""))
             {

@@ -3,7 +3,7 @@ function sendReq(prf) {
     $.ajax({
         type: "POST",
         url: "getQuerySuggestions.asmx/searchForPrefix",
-        data: JSON.stringify({ prefix: prf }),
+        data: JSON.stringify({ input: prf }),
         contentType: "application/json; charset=utf-8",
         dataType: "json",
         success: function (result) {
@@ -13,7 +13,7 @@ function sendReq(prf) {
             var block = $("<div>").addClass("sblock");
             // iterate over the array and build the list
             for (var i = 0; i < obj.length; i++) {
-                block.append("<div>" + prf + "<b>" + obj[i] + "</b>" + "</div>");
+                block.append("<div>" + prf.trim().toLowerCase() + "<b>" + obj[i] + "</b>" + "</div>");
             }
             $("#res").append(block);
         },
