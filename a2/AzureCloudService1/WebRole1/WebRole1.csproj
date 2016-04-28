@@ -100,6 +100,7 @@
     <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="script.js" />
     <Content Include="packages.config" />
     <None Include="Properties\PublishProfiles\a2inCloud - Web Deploy.pubxml" />
     <None Include="Web.Debug.config">

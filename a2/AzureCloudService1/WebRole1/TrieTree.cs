@@ -9,12 +9,15 @@ namespace WebRole1
 
         public TrieNode overallRoot { get; private set; }
 
+        //initializes the tree and the root
         public TrieTree() {
             this.overallRoot = new TrieNode('.', false);
-            //creates a blank TrieNode 
+            //creates a blank TrieNode as the root
         }
 
-
+        //  adds titles to the Trie tree
+        //pre:  takea a title as string
+        //post: modifies the tree to hold the data for this title
         public void addTitle(string title)
         {
             title = title.ToLower();
@@ -29,15 +32,15 @@ namespace WebRole1
                 if (temp.dict.ContainsKey(key))
                 { 
                     //access the node in the value, and keep constructing the tree
-                    temp = temp.dict[key];  //points to the node in the dict of that key
+                    temp = temp.dict[key];  
                 }
                 else
                 {
                     //if the character doesn't exist, create a new key of this character
                     if (i == (title.Length - 1))
-                    { //last character in the title
+                    {
+                        //creates an EOF (last character in the title)
                         valueNode = new TrieNode(key, true);
-                        //creates an EOF
                     }
                     else
                     {

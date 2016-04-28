@@ -25,7 +25,7 @@
     </Endpoints>
     <Contents>
       <Content destination=".\">
-        <SourceDirectory path="Z:\Desktop\INFO344\a2\AzureCloudService1\AzureCloudService1\rcf\Release\WebRole1Content\" />
+        <SourceDirectory path="C:\Users\iGuest\Desktop\INFO344\a2\AzureCloudService1\AzureCloudService1\rcf\Release\WebRole1Content\" />
       </Content>
     </Contents>
   </WebRole>

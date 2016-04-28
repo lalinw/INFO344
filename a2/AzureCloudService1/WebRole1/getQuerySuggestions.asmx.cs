@@ -20,12 +20,15 @@ namespace WebRole1
     [System.Web.Script.Services.ScriptService]
     public class getQuerySuggestions : System.Web.Services.WebService
     {
-
         public static TrieTree trie = new TrieTree();
         public string filePath = System.IO.Path.GetTempPath() + "\\titles_cleaned.txt";
 
+        //  downloads the titles file from the blob storage to the instance
+        //  reads the content to the stream reader 
+        //pre:  takes no parameter
+        //post: returns a string that indicates the method has terminated
         [WebMethod]
-        public void downloadTitles()
+        public string downloadTitles()
         {
             // Parse the connection string and return a reference to the storage account.
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(
@@ -33,19 +36,23 @@ namespace WebRole1
             CloudBlobClient blobClient = storageAccount.CreateCloudBlobClient();
             CloudBlobContainer container = blobClient.GetContainerReference("helloblob");
             CloudBlockBlob blockBlob = container.GetBlockBlobReference("titles_cleaned.txt");
-
             using (var fileStream = System.IO.File.OpenWrite(filePath))
             {
                 blockBlob.DownloadToStream(fileStream);
             }
+            return "download successful!";
         }
 
+        //  builds a trie from an empty trie object
+        //  resets the trie before building
+        //pre:  takes no parameter
+        //post: returns a string that indicates the method has terminated
         [WebMethod]
         public string buildTrie()
         {
+            trie = new TrieTree();  //reset trie before building 
             string status = "";
             System.Diagnostics.PerformanceCounter ramAvailable = new PerformanceCounter("Memory", "Available MBytes");
-
             using (StreamReader file = new StreamReader(filePath))
             {
                 int counter = 0;
@@ -63,13 +70,15 @@ namespace WebRole1
                         }
                     }
                 }
-                status = line + " " + counter;  //just a report for the user, remove later
+                status = "Last word added: " + line + "; Total words: " + counter;  //just a report for the user, remove later
             }
             return status;
         }
 
-
-        //returns the Node pointer to the end of the prefix node 
+        //  search for the words that has the indicated prefixes
+        //  returns a list of string of size 10 or less
+        //pre:  takes a string as the prefix
+        //post: prepare the pointer to call the helper method
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public string searchForPrefix(string prefix)
@@ -92,7 +101,7 @@ namespace WebRole1
                     return new JavaScriptSerializer().Serialize(suggestions);
                 }
             }
-            //now the pointer is at the node of the last character            
+            //pointer is at the node of the last character            
             if (temp.EOF == true)
             {
                 suggestions.Add("");
@@ -107,7 +116,9 @@ namespace WebRole1
             return new JavaScriptSerializer().Serialize(result);
         }
 
-        //returns a string of <= 10 suggested titles
+        //  helper method for searchForPrefix
+        //pre:  takes string of prefix, node pointer, and list to return
+        //post: returns a list of string when size is 10 or when there is nothing left to suggest
         public List<string> searchHelper(string prefix, TrieNode curr, List<string> suggestions)
         {
             if (suggestions.Count >= 10)
@@ -127,7 +138,6 @@ namespace WebRole1
                 }
                 foreach (char nextKey in curr.dict.Keys)
                 {
-                    //return searchHelper(prefix + curr.data, curr.dict[nextKey], suggestions);
                     suggestions = searchHelper(prefix + curr.data, curr.dict[nextKey], suggestions);
                 }
                 return suggestions;
