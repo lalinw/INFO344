@@ -40,7 +40,7 @@ namespace WebRole1
             {
                 blockBlob.DownloadToStream(fileStream);
             }
-            return "download successful!";
+            return "Download successful!";
         }
 
         //  builds a trie from an empty trie object
@@ -103,15 +103,6 @@ namespace WebRole1
                 }
             }
             //pointer is at the node of the last character            
-           // if (temp.EOF == true)
-            //{
-            //    suggestions.Add("");
-           // }
-            //if (temp.dict.Count == 0)
-           // {
-                //check if there's anything to recurse through 
-            //    return new JavaScriptSerializer().Serialize(suggestions);
-           // }
             //DFS recurse through the trie
             List<string> result = searchHelper("", temp, suggestions);
             return new JavaScriptSerializer().Serialize(result);
@@ -126,20 +117,15 @@ namespace WebRole1
             {
                 return suggestions;
             }
-            else if (curr.dict.Count == 0)
-            {
-                suggestions.Add(prefix + curr.data);
-                return suggestions;
-            }
             else
             {
                 if (curr.EOF)
                 {
-                    suggestions.Add(prefix + curr.data);
+                    suggestions.Add(prefix);
                 }
                 foreach (char nextKey in curr.dict.Keys)
                 {
-                    suggestions = searchHelper(prefix + curr.data, curr.dict[nextKey], suggestions);
+                    suggestions = searchHelper(prefix + curr.dict[nextKey].data, curr.dict[nextKey], suggestions);
                 }
                 return suggestions;
             }

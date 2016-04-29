@@ -25,3 +25,7 @@ div.sblock {
 div.sblock > div:hover {
     background-color: aliceblue;
 }
+
+div.msg {
+    color: gray;
+}
