@@ -22,6 +22,15 @@ namespace WorkerRole1
 
         public override void Run()
         {
+
+
+
+
+
+
+
+
+            //code from class---------------------------------------------------------
             CloudQueue queue = getQueue();
             CloudTable table = getTable();
             while (true)
@@ -34,7 +43,6 @@ namespace WorkerRole1
                     string[] numbers = msg.Split(' ');
                     int sum = Convert.ToInt32(numbers[0]) + Convert.ToInt32(numbers[1]) + Convert.ToInt32(numbers[2]);
                     string queueId = retrievedMessage.Id;
-
 
                     Thread.Sleep(2000);
 

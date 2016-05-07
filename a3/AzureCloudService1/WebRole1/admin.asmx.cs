@@ -20,11 +20,25 @@ namespace WebRole1
     // [System.Web.Script.Services.ScriptService]
     public class admin : System.Web.Services.WebService
     {
+        private List<string> visitedLinks = new List<string>();
+        //not sure if this will disappear like the trie tree, might have to change the location
 
         [WebMethod]
         public string startCrawling()
         {
             return "Hello World";
+        }
+
+        //helper method, called from startCrawling()
+        //adds a url to crawlQueue to crawl
+        private string addToQueue(string url)
+        {
+            CloudQueue queue = getQueue();
+            //add queue for worker to receiver
+            string msg = url;
+            CloudQueueMessage message = new CloudQueueMessage(msg);
+            queue.AddMessage(message);
+            return "success";
         }
 
         [WebMethod]
@@ -59,6 +73,13 @@ namespace WebRole1
             CloudTable table = tableClient.GetTableReference("crawlTable");
             table.CreateIfNotExists();
             return table;
+        }
+
+        [WebMethod]
+        public string getStats()
+        {
+            //returns stats to show on dashboard
+            return "Hello World";
         }
     }
 }
