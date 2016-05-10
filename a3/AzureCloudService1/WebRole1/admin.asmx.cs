@@ -4,9 +4,11 @@ using Microsoft.WindowsAzure.Storage.Table;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.IO;
 using System.Linq;
 using System.Web;
 using System.Web.Services;
+using System.Xml.Linq;
 
 namespace WebRole1
 {
@@ -21,6 +23,7 @@ namespace WebRole1
     public class admin : System.Web.Services.WebService
     {
         private HashSet<string> visitedLinks = new HashSet<string>(); //store visited Links
+        private Dictionary<string, List<string>> disallowList;
         
 
         [WebMethod]
@@ -29,10 +32,34 @@ namespace WebRole1
             string cnnRobot = "http://www.cnn.com/robots.txt";
             string bleacherRobot = "http://bleacherreport.com/robots.txt";
 
-            addToQueue(cnnRobot);
-            addToQueue(bleacherRobot);
+            parseRobot(cnnRobot, "cnn");
+            parseRobot(bleacherRobot, "bleacher");
 
             return "crawling started";
+        }
+
+        private string parseRobot(string robotLink, string name) {
+            List<string> disallow = new List<string>();
+            using (StreamReader reader = new StreamReader(robotLink))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (line.Contains("SiteMap"))
+                    {
+                        string[] link = line.Split(' ');
+                        string xml = link[1];
+                        addToQueue(xml);
+                    }
+                    else if (line.Contains("Disallow"))
+                    {
+                        string[] notAllow = line.Split(' ');
+                        disallow.Add(notAllow[1]);
+                    }
+                }
+            }
+            disallowList.Add(name, disallow);
+            return "done with robots.txt";
         }
 
         //helper method, called from startCrawling()

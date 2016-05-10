@@ -55,15 +55,25 @@ namespace WorkerRole1
                     
                     if (queue != null)
                     {
-
                         //read the queue msg and parse
                         CloudQueueMessage retrievedMessage = queue.GetMessage();
                         string msg = retrievedMessage.AsString;
 
-                        //parse through the xml/page
-                        string[] numbers = msg.Split(' ');
-                        int sum = Convert.ToInt32(numbers[0]) + Convert.ToInt32(numbers[1]) + Convert.ToInt32(numbers[2]);
-                        string queueId = retrievedMessage.Id;
+                        if (robots.txt)
+                        {
+                            //don't know if we'll encounter any more robots.txt
+                        }
+                        else if (xml)
+                        {
+
+                        }
+                        else if (html)
+                        {
+
+                        }
+                        else {
+                            //don't add it to the queue
+                        }
 
 
                         //remove disallowed ones
@@ -72,20 +82,27 @@ namespace WorkerRole1
 
 
 
-                        //add this one link to table
-                        Page newEntity = new Page(url, pageTitle, datetime);
-                        TableOperation insertOperation = TableOperation.Insert(newEntity);
-                        table.Execute(insertOperation);
-
+                        
                         //delete when done
                         queue.DeleteMessage(retrievedMessage);
                     }
                     else
                     {
-                        Thread.Sleep(50);  //give the CPU a downtime, so it can do other stuff and not keep checking the queue all the time 
+                        Thread.Sleep(50);  
+                        //if queue is empty, let the worker role sleep
                     }
                 }
             }
+        }
+
+        //add a Page object to table
+        private string addToTable() {
+            //add this one link to table
+            Page newEntity = new Page(url, pageTitle, datetime);
+            TableOperation insertOperation = TableOperation.Insert(newEntity);
+            table.Execute(insertOperation);
+
+            return "add table";
         }
 
         public override bool OnStart()

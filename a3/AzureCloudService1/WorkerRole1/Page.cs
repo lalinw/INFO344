@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 
-namespace WebRole1
+namespace WorkerRole1
 {
     public class Page : TableEntity
     {
