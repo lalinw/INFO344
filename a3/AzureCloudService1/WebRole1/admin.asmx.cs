@@ -20,13 +20,19 @@ namespace WebRole1
     // [System.Web.Script.Services.ScriptService]
     public class admin : System.Web.Services.WebService
     {
-        private List<string> visitedLinks = new List<string>();
-        //not sure if this will disappear like the trie tree, might have to change the location
+        private HashSet<string> visitedLinks = new HashSet<string>(); //store visited Links
+        
 
         [WebMethod]
         public string startCrawling()
         {
-            return "Hello World";
+            string cnnRobot = "http://www.cnn.com/robots.txt";
+            string bleacherRobot = "http://bleacherreport.com/robots.txt";
+
+            addToQueue(cnnRobot);
+            addToQueue(bleacherRobot);
+
+            return "crawling started";
         }
 
         //helper method, called from startCrawling()
@@ -44,19 +50,50 @@ namespace WebRole1
         [WebMethod]
         public string stopCrawling()
         {
-            return "Hello World";
+            CloudQueue cmd = getCommandQueue();
+            cmd.AddMessage(new CloudQueueMessage("stop"));
+            return "stopped crawling";
         }
+
+        [WebMethod]
+        public string resumeCrawling()
+        {
+            CloudQueue cmd = getCommandQueue();
+            cmd.AddMessage(new CloudQueueMessage("run"));
+            return "resumed crawling";
+        }
+
         [WebMethod]
         public string clearIndex()
         {
-            return "Hello World";
+            return "index cleared";
         }
         [WebMethod]
         public string getPageTitle()
         {
+            return "title";
+        }
+
+
+        [WebMethod]
+        public string getStats()
+        {
+            //returns stats to show on dashboard
+            //JSON??
+            //worker state (loading/crawling/idle)
+            //cpu utilization, ram
+            //urls crawled, last 10 crawled
+            //size of queue, size of index(table of crawled data)
+            //errors and their urls 
             return "Hello World";
         }
 
+
+
+
+
+
+        //queues & tables
         private CloudQueue getQueue()
         {
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
@@ -74,12 +111,15 @@ namespace WebRole1
             table.CreateIfNotExists();
             return table;
         }
-
-        [WebMethod]
-        public string getStats()
+        private CloudQueue getCommandQueue()
         {
-            //returns stats to show on dashboard
-            return "Hello World";
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
+            CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
+            CloudQueue queue = queueClient.GetQueueReference("commandQueue");
+            queue.CreateIfNotExists();
+            return queue;
         }
+        
+        
     }
 }

@@ -22,40 +22,69 @@ namespace WorkerRole1
 
         public override void Run()
         {
-
-
-
-
-
-
-
-
-            //code from class---------------------------------------------------------
             CloudQueue queue = getQueue();
             CloudTable table = getTable();
+            CloudQueue cmdQueue = getCommandQueue();
+            bool crawlYes = true;
             while (true)
-            { //keep checking the queue, always
-                if (queue.ApproximateMessageCount > 0)
-                {
-                    //read the queue msg and parse
-                    CloudQueueMessage retrievedMessage = queue.GetMessage();
-                    string msg = retrievedMessage.AsString;
-                    string[] numbers = msg.Split(' ');
-                    int sum = Convert.ToInt32(numbers[0]) + Convert.ToInt32(numbers[1]) + Convert.ToInt32(numbers[2]);
-                    string queueId = retrievedMessage.Id;
-
-                    Thread.Sleep(2000);
-
-                    //add to table
-                    Sum newEntity = new Sum(queueId, sum);
-                    TableOperation insertOperation = TableOperation.Insert(newEntity);
-                    table.Execute(insertOperation);
-
-                    //delete when done
-                    queue.DeleteMessage(retrievedMessage);
+            {
+                //check for command
+                if (cmdQueue != null) {
+                    CloudQueueMessage cmd = cmdQueue.GetMessage();
+                    string cmdString = cmd.AsString;
+                    if (cmdString.Equals("run")) {
+                        //start/resume crawling
+                        crawlYes = true;
+                    }
                 }
 
-                Thread.Sleep(3000);  //give the CPU a downtime, so it can do other stuff and not keep checking the queue all the time 
+                while (crawlYes)
+                {
+                    //check for command
+                    if (cmdQueue != null)
+                    {
+                        CloudQueueMessage cmd = cmdQueue.GetMessage();
+                        string cmdString = cmd.AsString;
+                        if (cmdString.Equals("stop"))
+                        {
+                            //stop crawling
+                            crawlYes = false;
+                        }
+                    }
+
+                    
+                    if (queue != null)
+                    {
+
+                        //read the queue msg and parse
+                        CloudQueueMessage retrievedMessage = queue.GetMessage();
+                        string msg = retrievedMessage.AsString;
+
+                        //parse through the xml/page
+                        string[] numbers = msg.Split(' ');
+                        int sum = Convert.ToInt32(numbers[0]) + Convert.ToInt32(numbers[1]) + Convert.ToInt32(numbers[2]);
+                        string queueId = retrievedMessage.Id;
+
+
+                        //remove disallowed ones
+                        //remove already visited ones 
+                        //put valid links in queue
+
+
+
+                        //add this one link to table
+                        Page newEntity = new Page(url, pageTitle, datetime);
+                        TableOperation insertOperation = TableOperation.Insert(newEntity);
+                        table.Execute(insertOperation);
+
+                        //delete when done
+                        queue.DeleteMessage(retrievedMessage);
+                    }
+                    else
+                    {
+                        Thread.Sleep(50);  //give the CPU a downtime, so it can do other stuff and not keep checking the queue all the time 
+                    }
+                }
             }
         }
 
@@ -95,12 +124,24 @@ namespace WorkerRole1
                 await Task.Delay(1000);
             }
         }
-
+        
+        
+        
+        //queues & tables
         private CloudQueue getQueue()
         {
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
             CloudQueue queue = queueClient.GetQueueReference("crawlQueue");
+            queue.CreateIfNotExists();
+            return queue;
+        }
+
+        private CloudQueue getCommandQueue()
+        {
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
+            CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
+            CloudQueue queue = queueClient.GetQueueReference("commandQueue");
             queue.CreateIfNotExists();
             return queue;
         }
@@ -113,5 +154,6 @@ namespace WorkerRole1
             table.CreateIfNotExists();
             return table;
         }
+
     }
 }
