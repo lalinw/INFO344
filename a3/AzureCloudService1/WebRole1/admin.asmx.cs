@@ -20,10 +20,10 @@ namespace WebRole1
     [System.ComponentModel.ToolboxItem(false)]
     // To allow this Web Service to be called from script, using ASP.NET AJAX, uncomment the following line. 
     // [System.Web.Script.Services.ScriptService]
-    public class admin : System.Web.Services.WebService
+    public class WebRole1 : System.Web.Services.WebService
     {
         private HashSet<string> visitedLinks = new HashSet<string>(); //store visited Links
-        private Dictionary<string, List<string>> disallowList;
+        private Dictionary<string, List<string>> disallowList = new Dictionary<string, List<string>>();
         
 
         [WebMethod]
@@ -38,6 +38,7 @@ namespace WebRole1
             return "crawling started";
         }
 
+        //parses robots.txt
         private string parseRobot(string robotLink, string name) {
             List<string> disallow = new List<string>();
             using (StreamReader reader = new StreamReader(robotLink))
@@ -59,7 +60,7 @@ namespace WebRole1
                 }
             }
             disallowList.Add(name, disallow);
-            return "done with robots.txt";
+            return "done with " + name + " robots.txt";
         }
 
         //helper method, called from startCrawling()

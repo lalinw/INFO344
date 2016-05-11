@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Xml.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -51,29 +52,35 @@ namespace WorkerRole1
                             crawlYes = false;
                         }
                     }
-
-                    
+                                        
                     if (queue != null)
                     {
                         //read the queue msg and parse
                         CloudQueueMessage retrievedMessage = queue.GetMessage();
-                        string msg = retrievedMessage.AsString;
+                        string link = retrievedMessage.AsString;
 
-                        if (robots.txt)
+                        if (link.EndsWith(".xml")) 
                         {
-                            //don't know if we'll encounter any more robots.txt
-                        }
-                        else if (xml)
-                        {
+                            XElement xml = XElement.Load(link);
+                            XName sitemap = XName.Get("sitemap", "http://www.sitemaps.org/schemas/sitemap/0.9");
+                            XName loc = XName.Get("loc", "http://www.sitemaps.org/schemas/sitemap/0.9");
+                            foreach (var smElement in xml.Elements(sitemap))
+                            {
+                                var element = smElement.Element(loc).Value;
+                                //NEEDS TO check if valid to crawl
+
+
+                                addToQueue(element);
+                            }
 
                         }
-                        else if (html)
-                        {
+                        //else if (html)
+                        //{
 
-                        }
-                        else {
+                        //}
+                        //else {
                             //don't add it to the queue
-                        }
+                        //}
 
 
                         //remove disallowed ones
@@ -95,8 +102,19 @@ namespace WorkerRole1
             }
         }
 
+        private string addToQueue(string url)
+        {
+            CloudQueue queue = getQueue();
+            //add queue for worker to receiver
+            string msg = url;
+            CloudQueueMessage message = new CloudQueueMessage(msg);
+            queue.AddMessage(message);
+            return "success";
+        }
+
         //add a Page object to table
-        private string addToTable() {
+        private string addToTable(string url, string pageTitle, DateTime datetime) {
+            CloudTable table = getTable();
             //add this one link to table
             Page newEntity = new Page(url, pageTitle, datetime);
             TableOperation insertOperation = TableOperation.Insert(newEntity);
