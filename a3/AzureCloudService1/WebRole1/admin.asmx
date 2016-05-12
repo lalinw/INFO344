@@ -1,1 +1,1 @@
-﻿<%@ WebService Language="C#" CodeBehind="admin.asmx.cs" Class="WebRole1.WebService1" %>
+﻿<%@ WebService Language="C#" CodeBehind="admin.asmx.cs" Class="WebRole1.admin" %>

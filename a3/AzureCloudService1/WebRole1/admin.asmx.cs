@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Web;
 using System.Web.Services;
 using System.Xml.Linq;
@@ -20,48 +21,21 @@ namespace WebRole1
     [System.ComponentModel.ToolboxItem(false)]
     // To allow this Web Service to be called from script, using ASP.NET AJAX, uncomment the following line. 
     // [System.Web.Script.Services.ScriptService]
-    public class WebRole1 : System.Web.Services.WebService
+    public class admin : System.Web.Services.WebService
     {
-        private HashSet<string> visitedLinks = new HashSet<string>(); //store visited Links
-        private Dictionary<string, List<string>> disallowList = new Dictionary<string, List<string>>();
         
-
         [WebMethod]
         public string startCrawling()
         {
             string cnnRobot = "http://www.cnn.com/robots.txt";
             string bleacherRobot = "http://bleacherreport.com/robots.txt";
-
-            parseRobot(cnnRobot, "cnn");
-            parseRobot(bleacherRobot, "bleacher");
-
+            addToQueue(cnnRobot);
+            addToQueue(bleacherRobot);
             return "crawling started";
         }
 
         //parses robots.txt
-        private string parseRobot(string robotLink, string name) {
-            List<string> disallow = new List<string>();
-            using (StreamReader reader = new StreamReader(robotLink))
-            {
-                string line;
-                while ((line = reader.ReadLine()) != null)
-                {
-                    if (line.Contains("SiteMap"))
-                    {
-                        string[] link = line.Split(' ');
-                        string xml = link[1];
-                        addToQueue(xml);
-                    }
-                    else if (line.Contains("Disallow"))
-                    {
-                        string[] notAllow = line.Split(' ');
-                        disallow.Add(notAllow[1]);
-                    }
-                }
-            }
-            disallowList.Add(name, disallow);
-            return "done with " + name + " robots.txt";
-        }
+        
 
         //helper method, called from startCrawling()
         //adds a url to crawlQueue to crawl
@@ -126,7 +100,7 @@ namespace WebRole1
         {
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
-            CloudQueue queue = queueClient.GetQueueReference("crawlQueue");
+            CloudQueue queue = queueClient.GetQueueReference("crawlqueue");
             queue.CreateIfNotExists();
             return queue;
         }
@@ -135,7 +109,7 @@ namespace WebRole1
         {
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
             CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
-            CloudTable table = tableClient.GetTableReference("crawlTable");
+            CloudTable table = tableClient.GetTableReference("crawltable");
             table.CreateIfNotExists();
             return table;
         }
@@ -143,7 +117,7 @@ namespace WebRole1
         {
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
-            CloudQueue queue = queueClient.GetQueueReference("commandQueue");
+            CloudQueue queue = queueClient.GetQueueReference("commandqueue");
             queue.CreateIfNotExists();
             return queue;
         }

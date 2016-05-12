@@ -13,6 +13,8 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Queue;
 using Microsoft.WindowsAzure.Storage.Table;
 using System.Configuration;
+using HtmlAgilityPack;
+using System.IO;
 
 namespace WorkerRole1
 {
@@ -21,28 +23,37 @@ namespace WorkerRole1
         private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
         private readonly ManualResetEvent runCompleteEvent = new ManualResetEvent(false);
 
+        private HashSet<string> visitedLinks = new HashSet<string>(); //store visited Links
+        private Dictionary<string, List<string>> disallowList = new Dictionary<string, List<string>>();
+
         public override void Run()
         {
+            
             CloudQueue queue = getQueue();
             CloudTable table = getTable();
             CloudQueue cmdQueue = getCommandQueue();
             bool crawlYes = true;
             while (true)
             {
+
                 //check for command
-                if (cmdQueue != null) {
+                if (cmdQueue.PeekMessage() != null)
+                {
                     CloudQueueMessage cmd = cmdQueue.GetMessage();
                     string cmdString = cmd.AsString;
-                    if (cmdString.Equals("run")) {
+                    if (cmdString.Equals("run"))
+                    {
                         //start/resume crawling
                         crawlYes = true;
                     }
+                    cmdQueue.DeleteMessage(cmd);
                 }
 
                 while (crawlYes)
                 {
+                    
                     //check for command
-                    if (cmdQueue != null)
+                    if (cmdQueue.PeekMessage() != null)
                     {
                         CloudQueueMessage cmd = cmdQueue.GetMessage();
                         string cmdString = cmd.AsString;
@@ -51,55 +62,157 @@ namespace WorkerRole1
                             //stop crawling
                             crawlYes = false;
                         }
+                        cmdQueue.DeleteMessage(cmd);
                     }
-                                        
-                    if (queue != null)
+
+                    if (queue.PeekMessage() != null)
                     {
                         //read the queue msg and parse
                         CloudQueueMessage retrievedMessage = queue.GetMessage();
-                        string link = retrievedMessage.AsString;
-
-                        if (link.EndsWith(".xml")) 
+                        if (retrievedMessage != null)
                         {
-                            XElement xml = XElement.Load(link);
-                            XName sitemap = XName.Get("sitemap", "http://www.sitemaps.org/schemas/sitemap/0.9");
-                            XName loc = XName.Get("loc", "http://www.sitemaps.org/schemas/sitemap/0.9");
-                            foreach (var smElement in xml.Elements(sitemap))
-                            {
-                                var element = smElement.Element(loc).Value;
-                                //NEEDS TO check if valid to crawl
-
-
-                                addToQueue(element);
+                            string link = retrievedMessage.AsString;
+                            if (link.EndsWith("robots.txt")) {
+                                parseRobot(link);
                             }
 
+                            else if (link.EndsWith(".xml"))
+                            {
+                                parseXml(link);
+                            }
+                            else if (link.ToLower().Contains(".html") || link.ToLower().Contains(".htm") || link.EndsWith("/"))
+                            //should account for ones that does not end with '/'
+                            //what if link ends with index.html or ends with a '/' (will have double slash)
+                            {
+                                parseHtml(link);
+                            }
+
+                            //delete when done
+                            queue.DeleteMessage(retrievedMessage);
                         }
-                        //else if (html)
-                        //{
-
-                        //}
-                        //else {
-                            //don't add it to the queue
-                        //}
-
-
-                        //remove disallowed ones
-                        //remove already visited ones 
-                        //put valid links in queue
-
-
-
-                        
-                        //delete when done
-                        queue.DeleteMessage(retrievedMessage);
                     }
                     else
                     {
-                        Thread.Sleep(50);  
+                        Thread.Sleep(50);
                         //if queue is empty, let the worker role sleep
                     }
                 }
             }
+        }
+
+
+        private string parseHtml(string link) {
+            //remove disallowed ones
+            //remove already visited ones 
+            //put valid links in queue
+
+            Console.WriteLine("this is html");
+            HtmlWeb web = new HtmlWeb();
+            HtmlDocument doc = web.Load(link);
+            string title = doc.DocumentNode.SelectSingleNode("//head/title").ToString();
+            if (!visitedLinks.Contains(link) || title != null) //check if visited, check if have title
+            {
+                //check for disallow paths 
+                string root = new Uri(link).Host;
+                bool allowToParse = true;
+                if (disallowList.ContainsKey(root)) {
+                    foreach (string subpath in disallowList[root]) {
+                        if (link.StartsWith(root + subpath)) {
+                            allowToParse = false;
+                            //break;
+                        }
+                    }
+                }
+                
+                if (allowToParse) {
+                    addToTable(link, title);
+                    visitedLinks.Add(link);
+                    //parsing the page
+                    foreach (HtmlNode linkitem in doc.DocumentNode.SelectNodes("//a[@href]"))
+                    {
+                        // Get the value of the HREF attribute
+                        string hrefValue = linkitem.GetAttributeValue("href", null);
+                        if (Uri.IsWellFormedUriString(hrefValue, UriKind.Absolute))
+                        {
+                            addToQueue(hrefValue);
+                        }
+                        if (Uri.IsWellFormedUriString(hrefValue, UriKind.Relative)) //problems with relative path 
+                        {
+                            addToQueue(link + hrefValue);
+                        }
+
+                    }
+                }
+            }
+            return "parsed HTML";
+        }
+
+        private string parseXml(string link) {
+            XElement xml = XElement.Load(link);
+            XName sitemap = XName.Get("sitemap", "http://www.sitemaps.org/schemas/sitemap/0.9");
+            XName url = XName.Get("url", "http://www.sitemaps.org/schemas/sitemap/0.9");
+            XName loc = XName.Get("loc", "http://www.sitemaps.org/schemas/sitemap/0.9");
+            XName date = XName.Get("lastmod", "http://www.sitemaps.org/schemas/sitemap/0.9");
+            XName date2 = XName.Get("publication_date", "http://www.sitemaps.org/schemas/sitemap/0.9");
+            DateTime cutoffTime = new DateTime(2016, 3, 1);
+
+            var top = xml.Elements(url);
+            if (xml.Elements(url).Count() == 0)
+            {
+                top = xml.Elements(sitemap);
+            }
+
+            var next = xml.Elements(date);
+            if (xml.Elements(date).Count() == 0)
+            {
+                next = xml.Elements(date2);
+            }
+
+            foreach (var smElement in top)
+            {
+                var dateOfLink = new DateTime(2016, 3, 2);
+                if (smElement.Element(date) != null)
+                {
+                    dateOfLink = Convert.ToDateTime(smElement.Element(date).Value);
+                }
+                else if (smElement.Element(date2) != null)
+                {
+                    dateOfLink = Convert.ToDateTime(smElement.Element(date2).Value);
+                }
+                if (dateOfLink.CompareTo(cutoffTime) >= 0)
+                {
+                    var element = smElement.Element(loc).Value;
+                    addToQueue(element);
+                }
+            }
+            return "parsed XML";
+        }
+
+        private string parseRobot(string robotLink)
+        {
+            List<string> disallow = new List<string>();
+            WebClient client = new WebClient();
+            Stream stream = client.OpenRead(robotLink);
+            StreamReader reader = new StreamReader(stream);
+            Uri root = new Uri(robotLink);
+            while (!reader.EndOfStream)
+            {
+                string line = reader.ReadLine();
+                if (line.Contains("Sitemap"))
+                {
+                    string[] link = line.Split(' ');
+                    string xml = link[1];
+                    addToQueue(xml);
+                }
+                else if (line.Contains("Disallow"))
+                {
+                    string[] notAllow = line.Split(' ');
+                    disallow.Add(notAllow[1]);
+                }
+            }
+            Console.WriteLine("parsed robot");
+            disallowList.Add(root.Host, disallow);
+            return "done with " + root.Host + " robots.txt";
         }
 
         private string addToQueue(string url)
@@ -109,18 +222,19 @@ namespace WorkerRole1
             string msg = url;
             CloudQueueMessage message = new CloudQueueMessage(msg);
             queue.AddMessage(message);
-            return "success";
+            Console.WriteLine(msg);
+            return "add to queue";
         }
 
         //add a Page object to table
-        private string addToTable(string url, string pageTitle, DateTime datetime) {
+        private string addToTable(string url, string pageTitle) {
             CloudTable table = getTable();
             //add this one link to table
-            Page newEntity = new Page(url, pageTitle, datetime);
+            Uri root = new Uri(url);
+            Page newEntity = new Page(root.Host, url, pageTitle);
             TableOperation insertOperation = TableOperation.Insert(newEntity);
             table.Execute(insertOperation);
-
-            return "add table";
+            return "add to table";
         }
 
         public override bool OnStart()
@@ -167,7 +281,7 @@ namespace WorkerRole1
         {
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
-            CloudQueue queue = queueClient.GetQueueReference("crawlQueue");
+            CloudQueue queue = queueClient.GetQueueReference("crawlqueue");
             queue.CreateIfNotExists();
             return queue;
         }
@@ -176,7 +290,7 @@ namespace WorkerRole1
         {
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
-            CloudQueue queue = queueClient.GetQueueReference("commandQueue");
+            CloudQueue queue = queueClient.GetQueueReference("commandqueue");
             queue.CreateIfNotExists();
             return queue;
         }
@@ -185,7 +299,7 @@ namespace WorkerRole1
         {
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
             CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
-            CloudTable table = tableClient.GetTableReference("crawlTable");
+            CloudTable table = tableClient.GetTableReference("crawltable");
             table.CreateIfNotExists();
             return table;
         }

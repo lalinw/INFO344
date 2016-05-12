@@ -8,16 +8,18 @@ namespace WebRole1
 {
     public class Page : TableEntity
     {
-        private DateTime datetime {get; set;}
+       // private DateTime datetime {get; set;}
         private string title { get; set; }
+        private string url { get; set; }
 
         //parameterless constructor
         public Page() { }
 
-        public Page(string url, string pageTitle, DateTime datetime) {
-            this.PartitionKey = url;
+        public Page(string root, string url, string pageTitle) {
+            this.PartitionKey = root;
             this.RowKey = this.RowKey = Guid.NewGuid().ToString();
-            this.datetime = datetime;
+            this.url = url;
+            //this.datetime = datetime;
             this.title = pageTitle;
         }
     }
