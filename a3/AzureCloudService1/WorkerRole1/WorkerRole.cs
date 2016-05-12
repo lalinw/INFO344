@@ -80,11 +80,16 @@ namespace WorkerRole1
                             {
                                 parseXml(link);
                             }
-                            else if (link.ToLower().Contains(".html") || link.ToLower().Contains(".htm") || link.EndsWith("/"))
+                            else
                             //should account for ones that does not end with '/'
                             //what if link ends with index.html or ends with a '/' (will have double slash)
                             {
-                                parseHtml(link);
+                                string[] linkParts = link.Split('/');
+                                string lastPart = linkParts[linkParts.Length - 1];
+                                if (lastPart.Contains(".html") || lastPart.ToLower().Contains(".htm") || lastPart.EndsWith("/") || !lastPart.Contains('.'))
+                                {
+                                    parseHtml(link);
+                                }
                             }
 
                             //delete when done
@@ -109,7 +114,7 @@ namespace WorkerRole1
             Console.WriteLine("this is html");
             HtmlWeb web = new HtmlWeb();
             HtmlDocument doc = web.Load(link);
-            string title = doc.DocumentNode.SelectSingleNode("//head/title").ToString();
+            string title = doc.DocumentNode.SelectSingleNode("//head/title").InnerHtml;
             if (!visitedLinks.Contains(link) || title != null) //check if visited, check if have title
             {
                 //check for disallow paths 
@@ -138,7 +143,10 @@ namespace WorkerRole1
                         }
                         if (Uri.IsWellFormedUriString(hrefValue, UriKind.Relative)) //problems with relative path 
                         {
-                            addToQueue(link + hrefValue);
+                            if (hrefValue != "/")
+                            {
+                                addToQueue(link + hrefValue);
+                            }
                         }
 
                     }
