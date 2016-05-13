@@ -15,6 +15,7 @@ using Microsoft.WindowsAzure.Storage.Table;
 using System.Configuration;
 using HtmlAgilityPack;
 using System.IO;
+using ClassLibrary1;
 
 namespace WorkerRole1
 {
@@ -25,6 +26,7 @@ namespace WorkerRole1
 
         private HashSet<string> visitedLinks = new HashSet<string>(); //store visited Links
         private Dictionary<string, List<string>> disallowList = new Dictionary<string, List<string>>();
+        private StreamWriter sw = new StreamWriter("C:\\Users\\iGuest\\Desktop\\INFO344\\a3\\inqueue.txt");
 
         public override void Run()
         {
@@ -84,12 +86,7 @@ namespace WorkerRole1
                             //should account for ones that does not end with '/'
                             //what if link ends with index.html or ends with a '/' (will have double slash)
                             {
-                                string[] linkParts = link.Split('/');
-                                string lastPart = linkParts[linkParts.Length - 1];
-                                if (lastPart.Contains(".html") || lastPart.ToLower().Contains(".htm") || lastPart.EndsWith("/") || !lastPart.Contains('.'))
-                                {
-                                    parseHtml(link);
-                                }
+                                parseHtml(link);
                             }
 
                             //delete when done
@@ -106,52 +103,99 @@ namespace WorkerRole1
         }
 
 
+        private bool htmlOkayToAdd(string link) {
+
+            Uri linkUri = new Uri(link);
+            //check for disallow paths 
+            if (linkUri.Host.EndsWith("cnn.com"))
+            {
+                //if CNN, check for disallow for cnn
+                foreach (string disallowPath in disallowList["www.cnn.com"])
+                {
+                    if (link.Contains(linkUri.Host + disallowPath))
+                    {
+                        return false;
+                    }
+                }
+            }
+            else if (linkUri.Host.EndsWith("bleacherreport.com"))
+            {
+                if (!link.Contains(linkUri.Host + "/nba"))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         private string parseHtml(string link) {
             //remove disallowed ones
             //remove already visited ones 
             //put valid links in queue
 
-            Console.WriteLine("this is html");
             HtmlWeb web = new HtmlWeb();
             HtmlDocument doc = web.Load(link);
             string title = doc.DocumentNode.SelectSingleNode("//head/title").InnerHtml;
-            if (!visitedLinks.Contains(link) || title != null) //check if visited, check if have title
-            {
-                //check for disallow paths 
-                string root = new Uri(link).Host;
-                bool allowToParse = true;
-                if (disallowList.ContainsKey(root)) {
-                    foreach (string subpath in disallowList[root]) {
-                        if (link.StartsWith(root + subpath)) {
-                            allowToParse = false;
-                            //break;
-                        }
-                    }
+            Uri linkUri = new Uri(link);
+
+            bool validRoot = htmlOkayToAdd(link);
+            
+            if (validRoot) {
+                var linkEnding = linkUri.Segments[linkUri.Segments.Length - 1];
+
+
+                //cleaning the link, so it's easier to check for duplicates
+                if (linkEnding.ToLower().Contains("index.html"))
+                {
+                    link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath;
                 }
-                
-                if (allowToParse) {
-                    addToTable(link, title);
-                    visitedLinks.Add(link);
-                    //parsing the page
-                    foreach (HtmlNode linkitem in doc.DocumentNode.SelectNodes("//a[@href]"))
+                else if (linkEnding.ToLower().Contains("index.htm"))
+                {
+                    link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath;
+                }
+                else if (!linkUri.Query.Equals(""))
+                {
+                    link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath + "/";
+                }
+                else if (!linkEnding.Contains(".") && !linkEnding.Contains("/"))
+                {
+                    link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath + "/";
+                }
+
+                if (Uri.IsWellFormedUriString(link, UriKind.Absolute)) {
+                    //check if the cleaned link is a "good" link or not
+                    if (!visitedLinks.Contains(link) || !title.Equals("")) //check if visited, check if have title
                     {
-                        // Get the value of the HREF attribute
-                        string hrefValue = linkitem.GetAttributeValue("href", null);
-                        if (Uri.IsWellFormedUriString(hrefValue, UriKind.Absolute))
+                        addToTable(link, title);
+                        visitedLinks.Add(link);
+                        //parsing the page
+                        foreach (HtmlNode linkitem in doc.DocumentNode.SelectNodes("//a[@href]"))
                         {
-                            addToQueue(hrefValue);
-                        }
-                        if (Uri.IsWellFormedUriString(hrefValue, UriKind.Relative)) //problems with relative path 
-                        {
-                            if (hrefValue != "/")
+                            // Get the value of the HREF attribute
+                            string hrefValue = linkitem.GetAttributeValue("href", "");
+                            if (Uri.IsWellFormedUriString(hrefValue, UriKind.Absolute) && htmlOkayToAdd(hrefValue))
                             {
-                                addToQueue(link + hrefValue);
+                                addToQueue(hrefValue);
                             }
+                            if (Uri.IsWellFormedUriString(hrefValue, UriKind.Relative))  
+                            {
+                                if (hrefValue != "/")
+                                {
+                                    string newLink = linkUri.Scheme + "://" + linkUri.Host + hrefValue;
+                                    if (htmlOkayToAdd(newLink))
+                                    {
+                                        addToQueue(newLink);
+                                    }
+                                }
+                            }
+
                         }
 
                     }
                 }
             }
+            
             return "parsed HTML";
         }
 
@@ -178,7 +222,7 @@ namespace WorkerRole1
 
             foreach (var smElement in top)
             {
-                var dateOfLink = new DateTime(2016, 3, 2);
+                DateTime dateOfLink = DateTime.Now;
                 if (smElement.Element(date) != null)
                 {
                     dateOfLink = Convert.ToDateTime(smElement.Element(date).Value);
@@ -218,7 +262,6 @@ namespace WorkerRole1
                     disallow.Add(notAllow[1]);
                 }
             }
-            Console.WriteLine("parsed robot");
             disallowList.Add(root.Host, disallow);
             return "done with " + root.Host + " robots.txt";
         }
@@ -230,7 +273,7 @@ namespace WorkerRole1
             string msg = url;
             CloudQueueMessage message = new CloudQueueMessage(msg);
             queue.AddMessage(message);
-            Console.WriteLine(msg);
+            sw.WriteLine(msg);
             return "add to queue";
         }
 
@@ -239,7 +282,7 @@ namespace WorkerRole1
             CloudTable table = getTable();
             //add this one link to table
             Uri root = new Uri(url);
-            Page newEntity = new Page(root.Host, url, pageTitle);
+            Page newEntity = new Page(url, pageTitle);
             TableOperation insertOperation = TableOperation.Insert(newEntity);
             table.Execute(insertOperation);
             return "add to table";
