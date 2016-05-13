@@ -117,16 +117,37 @@ namespace WorkerRole1
                         return false;
                     }
                 }
+                return true;
             }
             else if (linkUri.Host.EndsWith("bleacherreport.com"))
             {
-                if (!link.Contains(linkUri.Host + "/nba"))
+                foreach (string disallowPath in disallowList["bleacherreport.com"])
                 {
-                    return false;
+                    if (link.Contains(linkUri.Host + disallowPath))
+                    {
+                        return false;
+                    }
                 }
+                return true;
             }
+            else
+            {
+                return false;
+            }
+        }
 
-            return true;
+        //checks if the link from bleacherreport is nba-related
+        private bool nbaXML(string link) {
+            Uri linkUri = new Uri(link);
+            if (linkUri.Host.EndsWith("bleacherreport.com"))
+            {
+                if (link.Contains(linkUri.Host + "/nba"))
+                {
+                    return true;
+                }
+                return false;
+            }
+            return false;
         }
 
         private string parseHtml(string link) {
@@ -137,61 +158,66 @@ namespace WorkerRole1
             HtmlWeb web = new HtmlWeb();
             HtmlDocument doc = web.Load(link);
             string title = doc.DocumentNode.SelectSingleNode("//head/title").InnerHtml;
-            Uri linkUri = new Uri(link);
 
-            bool validRoot = htmlOkayToAdd(link);
-            
-            if (validRoot) {
-                var linkEnding = linkUri.Segments[linkUri.Segments.Length - 1];
+            if (!title.Equals(""))
+            {
+                Uri linkUri = new Uri(link);
+
+                bool validRoot = htmlOkayToAdd(link);
+
+                if (validRoot)
+                {
+                    var linkEnding = linkUri.Segments[linkUri.Segments.Length - 1];
 
 
-                //cleaning the link, so it's easier to check for duplicates
-                if (linkEnding.ToLower().Contains("index.html"))
-                {
-                    link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath;
-                }
-                else if (linkEnding.ToLower().Contains("index.htm"))
-                {
-                    link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath;
-                }
-                else if (!linkUri.Query.Equals(""))
-                {
-                    link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath + "/";
-                }
-                else if (!linkEnding.Contains(".") && !linkEnding.Contains("/"))
-                {
-                    link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath + "/";
-                }
-
-                if (Uri.IsWellFormedUriString(link, UriKind.Absolute)) {
-                    //check if the cleaned link is a "good" link or not
-                    if (!visitedLinks.Contains(link) || !title.Equals("")) //check if visited, check if have title
+                    //cleaning the link, so it's easier to check for duplicates
+                    if (linkEnding.ToLower().Contains("index.html"))
                     {
-                        addToTable(link, title);
-                        visitedLinks.Add(link);
-                        //parsing the page
-                        foreach (HtmlNode linkitem in doc.DocumentNode.SelectNodes("//a[@href]"))
+                        link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath;
+                    }
+                    else if (linkEnding.ToLower().Contains("index.htm"))
+                    {
+                        link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath;
+                    }
+                    else if (!linkUri.Query.Equals(""))
+                    {
+                        link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath + "/";
+                    }
+                    else if (!linkEnding.Contains(".") && !linkEnding.Contains("/"))
+                    {
+                        link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath + "/";
+                    }
+
+                    if (Uri.IsWellFormedUriString(link, UriKind.Absolute))
+                    {
+                        //check if the cleaned link is a "good" link or not
+                        if (!visitedLinks.Contains(link)) //check if visited, check if have title
                         {
-                            // Get the value of the HREF attribute
-                            string hrefValue = linkitem.GetAttributeValue("href", "");
-                            if (Uri.IsWellFormedUriString(hrefValue, UriKind.Absolute) && htmlOkayToAdd(hrefValue))
+                            addToTable(link, title);
+                            visitedLinks.Add(link);
+                            //parsing the page
+                            foreach (HtmlNode linkitem in doc.DocumentNode.SelectNodes("//a[@href]"))
                             {
-                                addToQueue(hrefValue);
-                            }
-                            if (Uri.IsWellFormedUriString(hrefValue, UriKind.Relative))  
-                            {
-                                if (hrefValue != "/")
+                                // Get the value of the HREF attribute
+                                string hrefValue = linkitem.GetAttributeValue("href", "");
+                                if (Uri.IsWellFormedUriString(hrefValue, UriKind.Absolute) && htmlOkayToAdd(hrefValue) && !visitedLinks.Contains(link))
                                 {
-                                    string newLink = linkUri.Scheme + "://" + linkUri.Host + hrefValue;
-                                    if (htmlOkayToAdd(newLink))
+                                    addToQueue(hrefValue);
+                                }
+                                else if (Uri.IsWellFormedUriString(hrefValue, UriKind.Relative))
+                                {
+                                    if (hrefValue != "/")
                                     {
-                                        addToQueue(newLink);
+                                        string newLink = linkUri.Scheme + "://" + linkUri.Host + hrefValue;
+                                        if (htmlOkayToAdd(newLink) && !visitedLinks.Contains(newLink))
+                                        {
+                                            addToQueue(newLink);
+                                        }
                                     }
                                 }
                             }
 
                         }
-
                     }
                 }
             }
@@ -200,41 +226,72 @@ namespace WorkerRole1
         }
 
         private string parseXml(string link) {
-            XElement xml = XElement.Load(link);
-            XName sitemap = XName.Get("sitemap", "http://www.sitemaps.org/schemas/sitemap/0.9");
-            XName url = XName.Get("url", "http://www.sitemaps.org/schemas/sitemap/0.9");
-            XName loc = XName.Get("loc", "http://www.sitemaps.org/schemas/sitemap/0.9");
-            XName date = XName.Get("lastmod", "http://www.sitemaps.org/schemas/sitemap/0.9");
-            XName date2 = XName.Get("publication_date", "http://www.sitemaps.org/schemas/sitemap/0.9");
-            DateTime cutoffTime = new DateTime(2016, 3, 1);
+            Uri linkUri = new Uri(link);
 
-            var top = xml.Elements(url);
-            if (xml.Elements(url).Count() == 0)
+            if (linkUri.Host.EndsWith("cnn.com"))
             {
-                top = xml.Elements(sitemap);
-            }
+                XElement xml = XElement.Load(link);
+                XName sitemap = XName.Get("sitemap", "http://www.sitemaps.org/schemas/sitemap/0.9");
+                XName url = XName.Get("url", "http://www.sitemaps.org/schemas/sitemap/0.9");
+                XName loc = XName.Get("loc", "http://www.sitemaps.org/schemas/sitemap/0.9");
+                XName date = XName.Get("lastmod", "http://www.sitemaps.org/schemas/sitemap/0.9");
+                XName date2 = XName.Get("publication_date", "http://www.sitemaps.org/schemas/sitemap/0.9");
+                DateTime cutoffTime = new DateTime(2016, 3, 1);
 
-            var next = xml.Elements(date);
-            if (xml.Elements(date).Count() == 0)
-            {
-                next = xml.Elements(date2);
-            }
-
-            foreach (var smElement in top)
-            {
-                DateTime dateOfLink = DateTime.Now;
-                if (smElement.Element(date) != null)
+                var top = xml.Elements(url);
+                if (xml.Elements(url).Count() == 0)
                 {
-                    dateOfLink = Convert.ToDateTime(smElement.Element(date).Value);
+                    top = xml.Elements(sitemap);
                 }
-                else if (smElement.Element(date2) != null)
+
+                var next = xml.Elements(date);
+                if (xml.Elements(date).Count() == 0)
                 {
-                    dateOfLink = Convert.ToDateTime(smElement.Element(date2).Value);
+                    next = xml.Elements(date2);
                 }
-                if (dateOfLink.CompareTo(cutoffTime) >= 0)
+
+                foreach (var smElement in top)
+                {
+
+                    DateTime dateOfLink = DateTime.Now;
+                    if (smElement.Element(date) != null)
+                    {
+                        dateOfLink = Convert.ToDateTime(smElement.Element(date).Value);
+                    }
+                    else if (smElement.Element(date2) != null)
+                    {
+                        dateOfLink = Convert.ToDateTime(smElement.Element(date2).Value);
+                    }
+                    if (dateOfLink.CompareTo(cutoffTime) >= 0)
+                    {
+                        var element = smElement.Element(loc).Value;
+                        if (!visitedLinks.Contains(link)) {
+                            addToQueue(element);
+                        }
+                        
+                    }
+
+                }
+            }
+            else if (linkUri.Host.EndsWith("bleacherreport.com"))
+            {
+                XElement xml = XElement.Load(link);
+                XName url = XName.Get("url", "http://www.google.com/schemas/sitemap/0.9");
+                XName loc = XName.Get("loc", "http://www.google.com/schemas/sitemap/0.9");
+                var top = xml.Elements(url);
+                foreach (var smElement in top)
                 {
                     var element = smElement.Element(loc).Value;
-                    addToQueue(element);
+                    if (element.ToLower().EndsWith(".xml") && !visitedLinks.Contains(link))
+                    {
+                        addToQueue(element);
+                    }
+                    else {
+                        if (nbaXML(element) && !visitedLinks.Contains(link))
+                        {
+                            addToQueue(element);
+                        }
+                    }
                 }
             }
             return "parsed XML";
