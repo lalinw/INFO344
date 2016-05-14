@@ -26,7 +26,7 @@ namespace WorkerRole1
 
         private HashSet<string> visitedLinks = new HashSet<string>(); //store visited Links
         private Dictionary<string, List<string>> disallowList = new Dictionary<string, List<string>>();
-        private StreamWriter sw = new StreamWriter("C:\\Users\\iGuest\\Desktop\\INFO344\\a3\\inqueue.txt");
+        //private StreamWriter sw = new StreamWriter("C:\\Users\\iGuest\\Desktop\\inqueue.txt");
 
         public override void Run()
         {
@@ -34,7 +34,7 @@ namespace WorkerRole1
             CloudQueue queue = getQueue();
             CloudTable table = getTable();
             CloudQueue cmdQueue = getCommandQueue();
-            bool crawlYes = true;
+            bool crawlYes = false;
             while (true)
             {
 
@@ -191,10 +191,16 @@ namespace WorkerRole1
                     if (Uri.IsWellFormedUriString(link, UriKind.Absolute))
                     {
                         //check if the cleaned link is a "good" link or not
-                        if (!visitedLinks.Contains(link)) //check if visited, check if have title
+                        var request = HttpWebRequest.Create(link);
+                        request.Method = "HEAD";
+                        var response = (HttpWebResponse)request.GetResponse();
+
+                        if (!visitedLinks.Contains(link) && response.StatusCode == HttpStatusCode.OK) 
+                            //check if visited, check if have title
                         {
                             addToTable(link, title);
                             visitedLinks.Add(link);
+                            
                             //parsing the page
                             foreach (HtmlNode linkitem in doc.DocumentNode.SelectNodes("//a[@href]"))
                             {
@@ -216,7 +222,6 @@ namespace WorkerRole1
                                     }
                                 }
                             }
-
                         }
                     }
                 }
@@ -330,7 +335,7 @@ namespace WorkerRole1
             string msg = url;
             CloudQueueMessage message = new CloudQueueMessage(msg);
             queue.AddMessage(message);
-            sw.WriteLine(msg);
+            //sw.WriteLine(msg);
             return "add to queue";
         }
 

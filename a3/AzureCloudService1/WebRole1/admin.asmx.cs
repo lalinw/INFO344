@@ -4,10 +4,13 @@ using Microsoft.WindowsAzure.Storage.Table;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Web;
+using System.Web.Script.Serialization;
+using System.Web.Script.Services;
 using System.Web.Services;
 using System.Xml.Linq;
 
@@ -31,6 +34,7 @@ namespace WebRole1
             string bleacherRobot = "http://bleacherreport.com/robots.txt";
             addToQueue(cnnRobot);
             addToQueue(bleacherRobot);
+            resumeCrawling();
             return "crawling started";
         }
 
@@ -78,20 +82,65 @@ namespace WebRole1
 
 
         [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public string getStats()
         {
             //returns stats to show on dashboard
             //JSON??
+            
             //worker state (loading/crawling/idle)
+
             //cpu utilization, ram
+            PerformanceCounter ramAvailable = new PerformanceCounter("Memory", "Available MBytes");
+            var ramFree = ramAvailable.NextValue() + "MB";
+
+            PerformanceCounter cpuCounter;
+            cpuCounter = new PerformanceCounter("Processor", "% Processor Time");
+            cpuCounter.CategoryName = "Processor";
+            cpuCounter.CounterName = "% Processor Time";
+            //cpuCounter.InstanceName = "_Total";
+            var cpuUsed = cpuCounter.NextValue() + "%";
+
             //urls crawled, last 10 crawled
+            //HOW?!, what data structure to use? 
+            //how to communicate between webrole and workerole 
+
             //size of queue, size of index(table of crawled data)
-            //errors and their urls 
-            return "Hello World";
+
+            CloudQueue queue = getQueue();
+            var curQueueSize = queue.ApproximateMessageCount;
+            //==insertOrReplace a row in a table
+
+
+            //errors and their urls
+            //WHAT DO YOU MEAN BY ERROR PAGES
+
+            List<string> placeholderList = new List<string>();
+            var stats = new WorkerStats
+            {
+                workerState = "running",
+                cpuUsed = cpuUsed,
+                ramAvailable = ramFree,
+                curQueueSize = (int)curQueueSize,
+                tableSize = 3,
+                last10Crawled = placeholderList,
+                errors = placeholderList
+            };
+
+            return new JavaScriptSerializer().Serialize(stats); 
         }
 
-
-
+        //inner class for json info to display worker role stats 
+        public class WorkerStats
+        {
+            public string workerState;
+            public string cpuUsed;
+            public string ramAvailable;
+            public int curQueueSize;
+            public int tableSize;
+            public List<string> last10Crawled;
+            public List<string> errors;
+        }
 
 
 
