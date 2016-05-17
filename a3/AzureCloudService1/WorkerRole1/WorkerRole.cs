@@ -28,13 +28,24 @@ namespace WorkerRole1
         private Dictionary<string, List<string>> disallowList = new Dictionary<string, List<string>>();
         //private StreamWriter sw = new StreamWriter("C:\\Users\\iGuest\\Desktop\\inqueue.txt");
 
+        List<string> lastTen = new List<string>();
+        int tableSize = 0;
+         string workerState = "idle";
+
         public override void Run()
         {
             
             CloudQueue queue = getQueue();
             CloudTable table = getTable();
+            CloudTable stat = statTable();
             CloudQueue cmdQueue = getCommandQueue();
             bool crawlYes = false;
+
+            //initialize the statTable
+            Stats startStat = new Stats(tableSize, workerState, lastTen);
+            TableOperation initializeStats = TableOperation.InsertOrReplace(startStat);
+            stat.Execute(initializeStats);
+
             while (true)
             {
 
@@ -102,6 +113,51 @@ namespace WorkerRole1
             }
         }
 
+        
+
+        private string updateTableSize()
+        {
+            CloudTable table = statTable();
+            TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
+            TableResult retrievedResult = table.Execute(retrieveOperation);
+            Stats updateEntity = (Stats)retrievedResult.Result;
+            //update the column
+            updateEntity.tableSize = tableSize++;
+            TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(updateEntity);
+            table.Execute(insertOrReplaceOperation);
+            return "update tableSize";
+        }
+
+        private string updateWorkerState(string newState)
+        {
+            CloudTable table = statTable();
+            TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
+            TableResult retrievedResult = table.Execute(retrieveOperation);
+            Stats updateEntity = (Stats)retrievedResult.Result;
+            updateEntity.workerState = newState;
+            TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(updateEntity);
+            table.Execute(insertOrReplaceOperation);
+            return "update worker state";
+        }
+
+        private string updateLast10Links(string newlink)
+        {
+            CloudTable table = statTable();
+            TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
+            TableResult retrievedResult = table.Execute(retrieveOperation);
+            Stats updateEntity = (Stats)retrievedResult.Result;
+            if (lastTen.Count >= 10) {
+                lastTen.RemoveAt(0);
+            }
+            lastTen.Add(newlink);
+            //reset the list in the table
+            updateEntity.lastCrawled = lastTen;
+            TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(updateEntity);
+            table.Execute(insertOrReplaceOperation);
+            return "update most recent links crawled";
+        }
+
+
 
         private bool htmlOkayToAdd(string link) {
 
@@ -121,14 +177,21 @@ namespace WorkerRole1
             }
             else if (linkUri.Host.EndsWith("bleacherreport.com"))
             {
-                foreach (string disallowPath in disallowList["bleacherreport.com"])
+                if (!linkUri.AbsolutePath.StartsWith("/articles"))
                 {
-                    if (link.Contains(linkUri.Host + disallowPath))
-                    {
-                        return false;
-                    }
+                    return false;
                 }
-                return true;
+                else
+                {
+                    foreach (string disallowPath in disallowList["bleacherreport.com"])
+                    {
+                        if (link.Contains(linkUri.Host + disallowPath))
+                        {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
             }
             else
             {
@@ -195,12 +258,12 @@ namespace WorkerRole1
                         request.Method = "HEAD";
                         var response = (HttpWebResponse)request.GetResponse();
 
-                        if (!visitedLinks.Contains(link) && response.StatusCode == HttpStatusCode.OK) 
-                            //check if visited, check if have title
+                        if (!visitedLinks.Contains(link) && response.StatusCode == HttpStatusCode.OK)
+                        //check if visited
                         {
                             addToTable(link, title);
                             visitedLinks.Add(link);
-                            
+
                             //parsing the page
                             foreach (HtmlNode linkitem in doc.DocumentNode.SelectNodes("//a[@href]"))
                             {
@@ -222,6 +285,11 @@ namespace WorkerRole1
                                     }
                                 }
                             }
+                        }
+                        else if (!visitedLinks.Contains(link) && response.StatusCode != HttpStatusCode.OK)
+                        {
+                            addToErrorTable(link, title);
+                            visitedLinks.Add(link);
                         }
                     }
                 }
@@ -350,6 +418,17 @@ namespace WorkerRole1
             return "add to table";
         }
 
+        private string addToErrorTable(string url, string pageTitle)
+        {
+            CloudTable table = errorTable();
+            //add this one link to table
+            Uri root = new Uri(url);
+            Page newEntity = new Page(url, pageTitle);
+            TableOperation insertOperation = TableOperation.Insert(newEntity);
+            table.Execute(insertOperation);
+            return "add to error table";
+        }
+
         public override bool OnStart()
         {
             // Set the maximum number of concurrent connections
@@ -417,5 +496,22 @@ namespace WorkerRole1
             return table;
         }
 
+        private CloudTable statTable()
+        {
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
+            CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
+            CloudTable table = tableClient.GetTableReference("stattable");
+            table.CreateIfNotExists();
+            return table;
+        }
+
+        private CloudTable errorTable()
+        {
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
+            CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
+            CloudTable table = tableClient.GetTableReference("errortable");
+            table.CreateIfNotExists();
+            return table;
+        }
     }
 }

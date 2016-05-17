@@ -1,4 +1,5 @@
-﻿using Microsoft.WindowsAzure.Storage;
+﻿using ClassLibrary1;
+using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Queue;
 using Microsoft.WindowsAzure.Storage.Table;
 using System;
@@ -27,19 +28,28 @@ namespace WebRole1
     public class admin : System.Web.Services.WebService
     {
         
+        public bool firstRun = true; 
+
         [WebMethod]
         public string startCrawling()
         {
-            string cnnRobot = "http://www.cnn.com/robots.txt";
-            string bleacherRobot = "http://bleacherreport.com/robots.txt";
-            addToQueue(cnnRobot);
-            addToQueue(bleacherRobot);
-            resumeCrawling();
-            return "crawling started";
+            if (firstRun)
+            {
+                string cnnRobot = "http://www.cnn.com/robots.txt";
+                string bleacherRobot = "http://bleacherreport.com/robots.txt";
+                addToQueue(cnnRobot);
+                addToQueue(bleacherRobot);
+                resumeCrawling();
+                firstRun = false;
+                return "crawling started";
+            }
+            else {
+                resumeCrawling();
+                return "resumed";
+            }
+            
         }
 
-        //parses robots.txt
-        
 
         //helper method, called from startCrawling()
         //adds a url to crawlQueue to crawl
@@ -72,8 +82,13 @@ namespace WebRole1
         [WebMethod]
         public string clearIndex()
         {
-            return "index cleared";
+            CloudTable table = getTable();
+            table.DeleteIfExists();
+            CloudQueue queue = getQueue();
+            queue.DeleteIfExists();
+            return "table and queue cleared";
         }
+
         [WebMethod]
         public string getPageTitle()
         {
@@ -88,8 +103,6 @@ namespace WebRole1
             //returns stats to show on dashboard
             //JSON??
             
-            //worker state (loading/crawling/idle)
-
             //cpu utilization, ram
             PerformanceCounter ramAvailable = new PerformanceCounter("Memory", "Available MBytes");
             var ramFree = ramAvailable.NextValue() + "MB";
@@ -102,28 +115,35 @@ namespace WebRole1
             var cpuUsed = cpuCounter.NextValue() + "%";
 
             //urls crawled, last 10 crawled
-            //HOW?!, what data structure to use? 
-            //how to communicate between webrole and workerole 
+            CloudTable stat = statTable();
+            TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
+            TableResult retrievedResult = stat.Execute(retrieveOperation);
+            Stats results = (Stats)retrievedResult.Result;
+            int tableSize = results.tableSize;
+            string workerState = results.workerState;
+            List<string> lastCrawled = results.lastCrawled;
 
             //size of queue, size of index(table of crawled data)
-
             CloudQueue queue = getQueue();
-            var curQueueSize = queue.ApproximateMessageCount;
-            //==insertOrReplace a row in a table
+            queue.FetchAttributes();
+            int curQueueSize = (int)queue.ApproximateMessageCount;
 
 
             //errors and their urls
-            //WHAT DO YOU MEAN BY ERROR PAGES
+            CloudTable error = errorTable();
+            TableOperation retrieveOperation2 = TableOperation.Retrieve<Page>("error", "this");
+            TableResult retrievedResult2 = error.Execute(retrieveOperation);
+            Stats results2 = (Stats)retrievedResult.Result;
 
-            List<string> placeholderList = new List<string>();
+            List <string> placeholderList = new List<string>();
             var stats = new WorkerStats
             {
-                workerState = "running",
-                cpuUsed = cpuUsed,
+                workerState = workerState,
+                cpuUsed = cpuUsed, //in %
                 ramAvailable = ramFree,
-                curQueueSize = (int)curQueueSize,
-                tableSize = 3,
-                last10Crawled = placeholderList,
+                curQueueSize = curQueueSize,
+                tableSize = tableSize,
+                last10Crawled = lastCrawled,
                 errors = placeholderList
             };
 
@@ -170,7 +190,25 @@ namespace WebRole1
             queue.CreateIfNotExists();
             return queue;
         }
-        
-        
+
+        private CloudTable statTable()
+        {
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
+            CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
+            CloudTable table = tableClient.GetTableReference("stattable");
+            table.CreateIfNotExists();
+            return table;
+        }
+
+        private CloudTable errorTable()
+        {
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
+            CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
+            CloudTable table = tableClient.GetTableReference("errortable");
+            table.CreateIfNotExists();
+            return table;
+        }
+
+     
     }
 }
