@@ -30,7 +30,7 @@ namespace WorkerRole1
 
         public static List<string> lastTen = new List<string>();
         public static int tableSize = 0;
-        public static string workerState = "idle";
+        public static string workerState = "Idling";
 
         public override void Run()
         {
@@ -60,6 +60,7 @@ namespace WorkerRole1
                         crawlYes = true;
                     }
                     cmdQueue.DeleteMessage(nextCmd);
+                    updateWorkerState("Loading");
                 }
 
                 while (crawlYes)
@@ -76,6 +77,7 @@ namespace WorkerRole1
                             crawlYes = false;
                         }
                         cmdQueue.DeleteMessage(nextCmd);
+                        updateWorkerState("Stopped");
                     }
 
                     //read the queue msg and parse
@@ -86,7 +88,6 @@ namespace WorkerRole1
                         if (link.EndsWith("robots.txt")) {
                             parseRobot(link);
                         }
-
                         else if (link.EndsWith(".xml"))
                         {
                             parseXml(link);
@@ -95,6 +96,7 @@ namespace WorkerRole1
                         //should account for ones that does not end with '/'
                         //what if link ends with index.html or ends with a '/' (will have double slash)
                         {
+                            updateWorkerState("Crawling");
                             parseHtml(link);
                         }
 
@@ -103,6 +105,7 @@ namespace WorkerRole1
                     }
                     else
                     {
+                        updateWorkerState("Idling");
                         Thread.Sleep(50);
                         //if queue is empty, let the worker role sleep
                     }
@@ -388,6 +391,10 @@ namespace WorkerRole1
                     string[] notAllow = line.Split(' ');
                     disallow.Add(notAllow[1]);
                 }
+            }
+            if (disallowList.ContainsKey(root.Host)) {
+                List<string> keyContent = disallowList[root.Host];
+                disallow = (List<string>)keyContent.Union(disallow);
             }
             disallowList.Add(root.Host, disallow);
             return "done with " + root.Host + " robots.txt";

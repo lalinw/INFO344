@@ -31,9 +31,10 @@ function callStats() {
 
 //call sendReq() every time the input changes 
 $(document).ready(function () {
-    //while(true) {
-        //callStats();
-    //}
+    while(true) {
+        var st = callStats();
+        console.log(st);
+    }
 });
 
 $(document).ready(function () {
@@ -74,4 +75,5 @@ $(document).ready(function () {
         });
     
     });
+
 });
