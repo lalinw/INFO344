@@ -93,12 +93,12 @@ namespace WorkerRole1
                         else if (link.EndsWith(".xml"))
                         {
                             parseXml(link);
+                            updateWorkerState("Crawling");
                         }
                         else
                         //should account for ones that does not end with '/'
                         //what if link ends with index.html or ends with a '/' (will have double slash)
                         {
-                            updateWorkerState("Crawling");
                             parseHtml(link);
                         }
 
@@ -119,22 +119,16 @@ namespace WorkerRole1
 
         private string updateTableSize(int x)
         {
-            
             CloudTable table = statTable();
-            TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
-            TableResult retrievedResult = table.Execute(retrieveOperation);
-            Stats updateEntity = (Stats)retrievedResult.Result;
-            //update the column
-            if (x == 1)
-            {
-                updateEntity.tableSize = tableSize++;
-            }
-            else {
-                updateEntity.tableSize = 0;
-            }
-            
-            TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(updateEntity);
-            table.Execute(insertOrReplaceOperation);
+            TableQuery<Stats> search = new TableQuery<Stats>().Where(
+                TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, "stats")
+            );
+            var result = table.ExecuteQuery(search).ToList();
+            Stats retrieved = result[0];
+            retrieved.tableSize++;
+            TableOperation upsertOperation = TableOperation.InsertOrReplace(retrieved);
+            table.Execute(upsertOperation);
+
             return "update tableSize";
         }
 
@@ -142,70 +136,71 @@ namespace WorkerRole1
         private string updateTotalUrls(int x)
         {
             CloudTable table = statTable();
-            TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
-            TableResult retrievedResult = table.Execute(retrieveOperation);
-            Stats updateEntity = (Stats)retrievedResult.Result;
-            //update the column
-            if (x == 1)
-            {
-                updateEntity.totalUrls = totalUrls++;
-            }
-            else {
-                updateEntity.totalUrls = 0;
-            }
-            TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(updateEntity);
-            table.Execute(insertOrReplaceOperation);
+            TableQuery<Stats> search = new TableQuery<Stats>().Where(
+                TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, "stats")
+            );
+            var result = table.ExecuteQuery(search).ToList();
+            Stats retrieved = result[0];
+            retrieved.totalUrls++;
+            TableOperation upsertOperation = TableOperation.InsertOrReplace(retrieved);
+            table.Execute(upsertOperation);
+
             return "update total urls";
         }
 
         private string updateWorkerState(string newState)
         {
             CloudTable table = statTable();
-            TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
-            TableResult retrievedResult = table.Execute(retrieveOperation);
-            Stats updateEntity = (Stats)retrievedResult.Result;
-            updateEntity.workerState = newState;
-            TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(updateEntity);
-            table.Execute(insertOrReplaceOperation);
+            TableQuery<Stats> search = new TableQuery<Stats>().Where(
+               TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, "stats")
+            );
+            var result = table.ExecuteQuery(search).ToList();
+            Stats retrieved = result[0];
+            retrieved.workerState = newState;
+            TableOperation upsertOperation = TableOperation.InsertOrReplace(retrieved);
+            table.Execute(upsertOperation);
             return "update worker state";
         }
 
         private string updateLast10Links(string newlink)
         {
             CloudTable table = statTable();
-            TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
-            TableResult retrievedResult = table.Execute(retrieveOperation);
-            Stats updateEntity = (Stats)retrievedResult.Result;
-            if (lastTen.Count >= 10) {
+            TableQuery<Stats> search = new TableQuery<Stats>().Where(
+               TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, "stats")
+            );
+            var result = table.ExecuteQuery(search).ToList();
+            Stats retrieved = result[0];
+            if (lastTen.Count >= 10)
+            {
                 lastTen.RemoveAt(0);
             }
             lastTen.Add(newlink);
             string recentLinks = listToCommaString(lastTen);
-            
-            //reset the list in the table
-            updateEntity.lastCrawled = recentLinks;
-            TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(updateEntity);
-            table.Execute(insertOrReplaceOperation);
+            retrieved.lastCrawled = recentLinks;
+            TableOperation upsertOperation = TableOperation.InsertOrReplace(retrieved);
+            table.Execute(upsertOperation);
+
             return "update most recent links crawled";
         }
 
         private string updateErrorLinks(string newlink)
         {
             CloudTable table = statTable();
-            TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
-            TableResult retrievedResult = table.Execute(retrieveOperation);
-            Stats updateEntity = (Stats)retrievedResult.Result;
+            TableQuery<Stats> search = new TableQuery<Stats>().Where(
+               TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, "stats")
+            );
+            var result = table.ExecuteQuery(search).ToList();
+            Stats retrieved = result[0];
             if (tenErrors.Count >= 10)
             {
                 tenErrors.RemoveAt(0);
             }
             tenErrors.Add(newlink);
             string recentLinks = listToCommaString(tenErrors);
+            retrieved.tenErrors = recentLinks;
+            TableOperation upsertOperation = TableOperation.InsertOrReplace(retrieved);
+            table.Execute(upsertOperation);
 
-            //reset the list in the table
-            updateEntity.lastCrawled = recentLinks;
-            TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(updateEntity);
-            table.Execute(insertOrReplaceOperation);
             return "update last 10 error links";
         }
 
@@ -474,7 +469,7 @@ namespace WorkerRole1
             //add queue for worker to receiver
             string msg = url;
             CloudQueueMessage message = new CloudQueueMessage(msg);
-            queue.AddMessage(message);
+            queue.AddMessageAsync(message);
             //sw.WriteLine(msg);
             updateTotalUrls(1);
             return "add to queue";

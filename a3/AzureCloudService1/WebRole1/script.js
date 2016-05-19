@@ -70,6 +70,7 @@ $(document).ready(function () {
                 console.log(msg);
             }
         });
+        alert("Crawler Started");
     });
 
 
@@ -83,6 +84,7 @@ $(document).ready(function () {
                 console.log(msg);
             }
         });
+        alert("Crawler is preparing to stop. Please wait.");
     
     });
     $('#clear-button').click(function() {
@@ -95,12 +97,17 @@ $(document).ready(function () {
                 console.log(msg);
             }
         });
+        alert("Table Cleared, Queue Deleted and Counters reset");
     
     });
 
     $(function () {
-        setInterval(callStats,1000);
+        setTimeout(makeStatsCall, 1000)
     });
+
+    function makeStatsCall() {
+        setInterval(callStats, 300);
+    }
 
     $('#find').click(function () {
         console.log('searching for title');
@@ -112,6 +119,9 @@ $(document).ready(function () {
             success: function (result) {
                 // Replace the div's content with the page method's return.
                 $('#results').html(result.d);
+            },
+            error: function (msg) {
+                $('#results').html("No results to display");
             }
         });
 

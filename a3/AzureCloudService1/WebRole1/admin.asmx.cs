@@ -88,7 +88,7 @@ namespace WebRole1
             CloudTable table = getTable();
             table.DeleteIfExists();
             CloudQueue queue = getQueue();
-            queue.DeleteIfExists();
+            queue.Clear();
             //reset the crawler stats
             resetTableSize();
             resetTotalUrls();
