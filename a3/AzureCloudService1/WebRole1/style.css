@@ -1,2 +1,29 @@
 ﻿body {
+    text-align: center;
 }
+
+.row {
+    padding: 25px 10px;
+
+}
+
+
+#graph {
+    height: 300px;
+    background-color:aliceblue;
+}
+
+.statbox {
+    padding: 0px 10px 25px 10px;
+    
+}
+
+div.statbox > div {
+    font-size: 25px;
+}
+
+#searchtitle {
+    width: 80%;
+}
+
+

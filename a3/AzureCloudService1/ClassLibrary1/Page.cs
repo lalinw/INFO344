@@ -19,10 +19,10 @@ namespace ClassLibrary1
 
         public Page(string url, string pageTitle)
         {
-            this.PartitionKey = createMD5(url);
-            this.RowKey = this.RowKey = Guid.NewGuid().ToString();
+            this.PartitionKey = "title";
+            this.RowKey = createMD5(url);
+            //this.RowKey = Guid.NewGuid().ToString();
             this.url = url;
-            //this.datetime = datetime;
             this.title = pageTitle;
         }
 

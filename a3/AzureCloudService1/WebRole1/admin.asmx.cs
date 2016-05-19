@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Web;
 using System.Web.Script.Serialization;
 using System.Web.Script.Services;
@@ -24,7 +25,7 @@ namespace WebRole1
     [WebServiceBinding(ConformsTo = WsiProfiles.BasicProfile1_1)]
     [System.ComponentModel.ToolboxItem(false)]
     // To allow this Web Service to be called from script, using ASP.NET AJAX, uncomment the following line. 
-    // [System.Web.Script.Services.ScriptService]
+    [System.Web.Script.Services.ScriptService]
     public class admin : System.Web.Services.WebService
     {
         
@@ -82,87 +83,100 @@ namespace WebRole1
         [WebMethod]
         public string clearIndex()
         {
+            stopCrawling();
+            //stop the crawler and then delete
             CloudTable table = getTable();
             table.DeleteIfExists();
             CloudQueue queue = getQueue();
             queue.DeleteIfExists();
-            return "table and queue cleared";
+            //reset the crawler stats
+            resetTableSize();
+            resetTotalUrls();
+            return "table and queue and stats cleared";
         }
 
         [WebMethod]
-        public string getPageTitle()
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public string getPageTitle(string url)
         {
-            return "title";
+            string rowKey = createMD5(url);
+            CloudTable table = getTable();
+            TableOperation retrieveOperation = TableOperation.Retrieve<Page>("title", rowKey);
+            TableResult retrievedResult = table.Execute(retrieveOperation);
+            Page results = (Page)retrievedResult.Result;
+            return new JavaScriptSerializer().Serialize(results.title);
         }
+        //search implementation
 
+        private static string createMD5(string input)
+        {
+            // Use input string to calculate MD5 hash
+            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+            {
+                byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input);
+                byte[] hashBytes = md5.ComputeHash(inputBytes);
+
+                // Convert the byte array to hexadecimal string
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < hashBytes.Length; i++)
+                {
+                    sb.Append(hashBytes[i].ToString("X2"));
+                }
+                return sb.ToString();
+            }
+        }
 
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public string getStats()
         {
-            //returns stats to show on dashboard
-            //JSON??
-            
+           
             //cpu utilization, ram
             PerformanceCounter ramAvailable = new PerformanceCounter("Memory", "Available MBytes");
             var ramFree = ramAvailable.NextValue() + "MB";
 
+            
             PerformanceCounter cpuCounter;
             cpuCounter = new PerformanceCounter("Processor", "% Processor Time");
             cpuCounter.CategoryName = "Processor";
             cpuCounter.CounterName = "% Processor Time";
-            //cpuCounter.InstanceName = "_Total";
+            cpuCounter.InstanceName = "_Total";
             var cpuUsed = cpuCounter.NextValue() + "%";
+
+           
 
             //urls crawled, last 10 crawled
             CloudTable stat = statTable();
             TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
             TableResult retrievedResult = stat.Execute(retrieveOperation);
             Stats results = (Stats)retrievedResult.Result;
-            int tableSize = results.tableSize;
+            string tableSize = "" + results.tableSize;
             string workerState = results.workerState;
-            List<string> lastCrawled = results.lastCrawled;
+            string totalurls = "" + results.totalUrls;
+            string lastCrawled = results.lastCrawled;
+            string errors = results.tenErrors;
 
             //size of queue, size of index(table of crawled data)
             CloudQueue queue = getQueue();
             queue.FetchAttributes();
-            int curQueueSize = (int)queue.ApproximateMessageCount;
+            string curQueueSize = "" + queue.ApproximateMessageCount;
 
 
-            //errors and their urls
-            CloudTable error = errorTable();
-            TableOperation retrieveOperation2 = TableOperation.Retrieve<Page>("error", "this");
-            TableResult retrievedResult2 = error.Execute(retrieveOperation);
-            Stats results2 = (Stats)retrievedResult.Result;
 
-            List <string> placeholderList = new List<string>();
-            var stats = new WorkerStats
-            {
-                workerState = workerState,
-                cpuUsed = cpuUsed, //in %
-                ramAvailable = ramFree,
-                curQueueSize = curQueueSize,
-                tableSize = tableSize,
-                last10Crawled = lastCrawled,
-                errors = placeholderList
-            };
-
+            List<string> stats = new List<string>();
+            stats.Add(workerState);
+            stats.Add(cpuUsed);
+            stats.Add(ramFree);
+            stats.Add(curQueueSize);
+            stats.Add(tableSize);
+            stats.Add(totalurls);
+            stats.Add(lastCrawled);
+            stats.Add(errors);
+            
             return new JavaScriptSerializer().Serialize(stats); 
         }
 
-        //inner class for json info to display worker role stats 
-        public class WorkerStats
-        {
-            public string workerState;
-            public string cpuUsed;
-            public string ramAvailable;
-            public int curQueueSize;
-            public int tableSize;
-            public List<string> last10Crawled;
-            public List<string> errors;
-        }
-
-
+        
 
         //queues & tables
         private CloudQueue getQueue()
@@ -209,6 +223,34 @@ namespace WebRole1
             return table;
         }
 
-     
+
+        private string resetTableSize()
+        {
+
+            CloudTable table = statTable();
+            TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
+            TableResult retrievedResult = table.Execute(retrieveOperation);
+            Stats updateEntity = (Stats)retrievedResult.Result;
+            //update the column
+            updateEntity.tableSize = 0;
+            TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(updateEntity);
+            table.Execute(insertOrReplaceOperation);
+            return "update tableSize";
+        }
+
+
+        private string resetTotalUrls()
+        {
+            CloudTable table = statTable();
+            TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
+            TableResult retrievedResult = table.Execute(retrieveOperation);
+            Stats updateEntity = (Stats)retrievedResult.Result;
+            //update the column
+            updateEntity.totalUrls = 0;
+            TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(updateEntity);
+            table.Execute(insertOrReplaceOperation);
+            return "update total urls";
+        }
+
     }
 }

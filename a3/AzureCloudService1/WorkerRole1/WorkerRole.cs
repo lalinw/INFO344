@@ -28,8 +28,10 @@ namespace WorkerRole1
         private static Dictionary<string, List<string>> disallowList = new Dictionary<string, List<string>>();
         //private StreamWriter sw = new StreamWriter("C:\\Users\\iGuest\\Desktop\\inqueue.txt");
 
-        public static List<string> lastTen = new List<string>();
+        public static List<string> lastTen = new List<string> { };
+        public static List<string> tenErrors = new List<string> { };
         public static int tableSize = 0;
+        public static int totalUrls = 0;
         public static string workerState = "Idling";
 
         public override void Run()
@@ -42,7 +44,7 @@ namespace WorkerRole1
             bool crawlYes = false;
 
             //initialize the statTable
-            Stats startStat = new Stats(tableSize, workerState, lastTen);
+            Stats startStat = new Stats(tableSize, workerState, "", "", totalUrls);
             TableOperation initializeStats = TableOperation.InsertOrReplace(startStat);
             stat.Execute(initializeStats);
 
@@ -115,17 +117,45 @@ namespace WorkerRole1
 
         
 
-        private string updateTableSize()
+        private string updateTableSize(int x)
+        {
+            
+            CloudTable table = statTable();
+            TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
+            TableResult retrievedResult = table.Execute(retrieveOperation);
+            Stats updateEntity = (Stats)retrievedResult.Result;
+            //update the column
+            if (x == 1)
+            {
+                updateEntity.tableSize = tableSize++;
+            }
+            else {
+                updateEntity.tableSize = 0;
+            }
+            
+            TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(updateEntity);
+            table.Execute(insertOrReplaceOperation);
+            return "update tableSize";
+        }
+
+
+        private string updateTotalUrls(int x)
         {
             CloudTable table = statTable();
             TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
             TableResult retrievedResult = table.Execute(retrieveOperation);
             Stats updateEntity = (Stats)retrievedResult.Result;
             //update the column
-            updateEntity.tableSize = tableSize++;
+            if (x == 1)
+            {
+                updateEntity.totalUrls = totalUrls++;
+            }
+            else {
+                updateEntity.totalUrls = 0;
+            }
             TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(updateEntity);
             table.Execute(insertOrReplaceOperation);
-            return "update tableSize";
+            return "update total urls";
         }
 
         private string updateWorkerState(string newState)
@@ -150,20 +180,54 @@ namespace WorkerRole1
                 lastTen.RemoveAt(0);
             }
             lastTen.Add(newlink);
+            string recentLinks = listToCommaString(lastTen);
+            
             //reset the list in the table
-            updateEntity.lastCrawled = lastTen;
+            updateEntity.lastCrawled = recentLinks;
             TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(updateEntity);
             table.Execute(insertOrReplaceOperation);
             return "update most recent links crawled";
         }
 
+        private string updateErrorLinks(string newlink)
+        {
+            CloudTable table = statTable();
+            TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
+            TableResult retrievedResult = table.Execute(retrieveOperation);
+            Stats updateEntity = (Stats)retrievedResult.Result;
+            if (tenErrors.Count >= 10)
+            {
+                tenErrors.RemoveAt(0);
+            }
+            tenErrors.Add(newlink);
+            string recentLinks = listToCommaString(tenErrors);
+
+            //reset the list in the table
+            updateEntity.lastCrawled = recentLinks;
+            TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(updateEntity);
+            table.Execute(insertOrReplaceOperation);
+            return "update last 10 error links";
+        }
+
+        private string listToCommaString(List<string> list) {
+            string commaString = "";
+            if (list.Count > 0)
+            {
+                commaString = commaString + list[0];
+                for (int i = 1; i < list.Count - 1; i++)
+                {
+                    commaString = commaString + "," + list[i];
+                }
+            }
+            return commaString;
+        }
 
 
         private bool htmlOkayToAdd(string link) {
 
             Uri linkUri = new Uri(link);
             //check for disallow paths 
-            if (linkUri.Host.EndsWith("cnn.com"))
+            if (linkUri.Host.EndsWith("cnn.com") && disallowList["www.cnn.com"] != null)
             {
                 //if CNN, check for disallow for cnn
                 foreach (string disallowPath in disallowList["www.cnn.com"])
@@ -269,7 +333,7 @@ namespace WorkerRole1
                             {
                                 // Get the value of the HREF attribute
                                 string hrefValue = linkitem.GetAttributeValue("href", "");
-                                if (Uri.IsWellFormedUriString(hrefValue, UriKind.Absolute) && htmlOkayToAdd(hrefValue) && !visitedLinks.Contains(link))
+                                if (Uri.IsWellFormedUriString(hrefValue, UriKind.Absolute) && htmlOkayToAdd(hrefValue) && !visitedLinks.Contains(hrefValue))
                                 {
                                     addToQueue(hrefValue);
                                 }
@@ -281,10 +345,12 @@ namespace WorkerRole1
                                         if (htmlOkayToAdd(newLink) && !visitedLinks.Contains(newLink))
                                         {
                                             addToQueue(newLink);
+                                            
                                         }
                                     }
                                 }
                             }
+                            
                         }
                         else if (!visitedLinks.Contains(link) && response.StatusCode != HttpStatusCode.OK)
                         {
@@ -394,7 +460,9 @@ namespace WorkerRole1
             }
             if (disallowList.ContainsKey(root.Host)) {
                 List<string> keyContent = disallowList[root.Host];
-                disallow = (List<string>)keyContent.Union(disallow);
+                foreach (string item in keyContent) {
+                    disallow.Add(item);
+                }
             }
             disallowList.Add(root.Host, disallow);
             return "done with " + root.Host + " robots.txt";
@@ -408,6 +476,7 @@ namespace WorkerRole1
             CloudQueueMessage message = new CloudQueueMessage(msg);
             queue.AddMessage(message);
             //sw.WriteLine(msg);
+            updateTotalUrls(1);
             return "add to queue";
         }
 
@@ -419,6 +488,8 @@ namespace WorkerRole1
             Page newEntity = new Page(url, pageTitle);
             TableOperation insertOperation = TableOperation.Insert(newEntity);
             table.Execute(insertOperation);
+            updateTableSize(1);
+            updateLast10Links(url);
             return "add to table";
         }
 
@@ -430,6 +501,7 @@ namespace WorkerRole1
             Page newEntity = new Page(url, pageTitle);
             TableOperation insertOperation = TableOperation.Insert(newEntity);
             table.Execute(insertOperation);
+            updateErrorLinks(url);
             return "add to error table";
         }
 

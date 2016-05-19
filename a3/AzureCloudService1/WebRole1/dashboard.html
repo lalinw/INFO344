@@ -9,26 +9,75 @@
     <script src="script.js"></script>
 </head>
 <body>
-    <div class="status">
-        <div id="graph">graph</div>
-        <button id="run-button" class="btn btn-success">Run</button>
-        <button id="stop-button" class="btn btn-primary">Stop</button>
-        <button id="clear-button" class="btn btn-danger">Clear</button>
+    <h2>Crawler Admin Dashboard</h2>
+    <div class="status container">
+        <h3>Status</h3>
+        <div class="row">
+            <div class="col-sm-8">
+                <div id="graph">graph</div>
+                
+            </div>
+            <div class="col-sm-4">
+                <div class="statbox">
+                    <p>Ram Available</p>
+                    <div id="ram">RAM</div>
+                </div>
+                <div class="statbox">
+                    <p>CPU Usage</p>
+                    <div id="cpu">CPU</div>
+                </div>
+                <div class="statbox">
+                    <p>Current Crawler State</p>
+                    <div id="state">State</div>
+                </div>
+                <button id="run-button" class="btn btn-success">Run</button>
+                <button id="stop-button" class="btn btn-primary">Stop</button>
+                <button id="clear-button" class="btn btn-danger">Clear</button>
 
-        <div id="tablesize"></div>
-        <div id="linksinqueue"></div>
+            </div>  
+        </div>
+        <div class="row">
+            <div class="col-sm-4 statbox">
+                <p>Total Links Crawled</p>
+                <div id="tablesize"></div>
+            </div>
+            <div class="col-sm-4 statbox">
+                <p>Links in the Queue</p>
+                <div id="linksinqueue"></div>
+            </div>
+            <div class="col-sm-4 statbox">
+                <p>Total URLs Found</p>
+                <div id="totalurls"></div>
+            </div>
 
-        <div id="ram"></div>
-        <div id="cpu"></div>
-        <div id="state"></div>
 
+        </div>
+           
     </div>
 
-    <div class="links">
-        <div id="tenlinks"></div>
-        <div id="errorlinks"></div>
+    <div class="search container">
+        <div class="row">
+            <div class="col-lg-12">
+                <input id="searchtitle" />
+                <button id="find" class="btn btn-primary">Search</button>
+                <div id="results"></div>
+            </div>
+        </div>
     </div>
-    
+
+    <div class="links container">
+        <div class="row">
+            <div class="col-md-6">
+                <h3>10 Most recent links crawled</h3>
+                <div id="tenlinks"></div>
+            </div>
+            <div class="col-md-6">
+                <h3>10 Most recent errors</h3>
+                <div id="errorlinks"></div>
+            </div>
+        </div>
+    </div>
+
 
 </body>
 </html>

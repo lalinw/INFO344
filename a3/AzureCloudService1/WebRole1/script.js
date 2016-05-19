@@ -7,37 +7,59 @@ function callStats() {
         dataType: "json",
         success: function (result) {
             console.log('success');
-            //$('#res').html(""); //clears the div
-            //var obj = JSON.parse(result.d);
-            //var cleanInput = prf.trim().toLowerCase();
+            
+            var stats = JSON.parse(result.d);
+            console.log(stats);
 
-            //var block = $("<div>").addClass("sblock");
-            // iterate over the array and build the list
-            //for (var i = 0; i < obj.length; i++) {
-            //block.append("<div>" + cleanInput + "<b>" + obj[i] + "</b>" + "</div>");
-            //}
-            //if (cleanInput != "" && obj.length == 0) {
-            //block.append("<div class='msg'><i>No suggestions found</i></div>");
-            //}
-            //$("#res").append(block);
+            $('#state').html(stats[0]);
+            $('#cpu').html(stats[1]);
+            $('#ram').html(stats[2]);
+            $('#linksinqueue').html(stats[3]);
+            $('#tablesize').html(stats[4]);
+            $('#totalurls').html(stats[5]);
+  
+            $('#tenlinks').html("");
+            var linksStr = stats[6];
+            var links = linksStr.split(',');
+            var lnk = $("<div>");
+            for (var i = 0; i < links.size; i++) {
+                lnk.append("<p>" + links[i] + "</p>");
+                console.log(links[i]);
+            }
+            
+            $('#tenlinks').append(lnk);
+
+
+            //$('#errorlinks').html("");
+            var err = $("<div>");
+            var errorsStr = stats[7];
+            var errors = errorsStr.split(',');
+
+            $('#errorlinks');
         },
         error: function (msg) {
             console.log('error');
         }
-    })
+    });
 };
+//$('#res').html(""); //clears the div
+//var obj = JSON.parse(result.d);
+//var cleanInput = prf.trim().toLowerCase();
+
+//var block = $("<div>").addClass("sblock");
+// iterate over the array and build the list
+//for (var i = 0; i < obj.length; i++) {
+//block.append("<div>" + cleanInput + "<b>" + obj[i] + "</b>" + "</div>");
+//}
+//if (cleanInput != "" && obj.length == 0) {
+//block.append("<div class='msg'><i>No suggestions found</i></div>");
+//}
+//$("#res").append(block);
 
 
 
-//call sendReq() every time the input changes 
 $(document).ready(function () {
-    while(true) {
-        var st = callStats();
-        console.log(st);
-    }
-});
 
-$(document).ready(function () {
     $('#run-button').click(function () {
         console.log("clicked run button");
         $.ajax({
@@ -75,5 +97,24 @@ $(document).ready(function () {
         });
     
     });
+
+    $(function () {
+        setInterval(callStats,1000);
+    });
+
+    $('#find').click(function () {
+        console.log('searching for title');
+        $.ajax({
+            type: "POST",
+            url: "admin.asmx/getPagetitle",
+            data: JSON.stringify({ url: $('#searchtitle').value }),
+            dataType: "json",
+            success: function (result) {
+                // Replace the div's content with the page method's return.
+                $('#results').html(result.d);
+            }
+        });
+
+    })
 
 });
