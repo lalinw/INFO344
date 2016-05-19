@@ -24,13 +24,13 @@ namespace WorkerRole1
         private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
         private readonly ManualResetEvent runCompleteEvent = new ManualResetEvent(false);
 
-        private HashSet<string> visitedLinks = new HashSet<string>(); //store visited Links
-        private Dictionary<string, List<string>> disallowList = new Dictionary<string, List<string>>();
+        private static HashSet<string> visitedLinks = new HashSet<string>(); //store visited Links
+        private static Dictionary<string, List<string>> disallowList = new Dictionary<string, List<string>>();
         //private StreamWriter sw = new StreamWriter("C:\\Users\\iGuest\\Desktop\\inqueue.txt");
 
-        List<string> lastTen = new List<string>();
-        int tableSize = 0;
-         string workerState = "idle";
+        public static List<string> lastTen = new List<string>();
+        public static int tableSize = 0;
+        public static string workerState = "idle";
 
         public override void Run()
         {
@@ -50,59 +50,56 @@ namespace WorkerRole1
             {
 
                 //check for command
-                if (cmdQueue.PeekMessage() != null)
+                CloudQueueMessage nextCmd = cmdQueue.GetMessage();
+                if (nextCmd != null)
                 {
-                    CloudQueueMessage cmd = cmdQueue.GetMessage();
-                    string cmdString = cmd.AsString;
+                    string cmdString = nextCmd.AsString;
                     if (cmdString.Equals("run"))
                     {
                         //start/resume crawling
                         crawlYes = true;
                     }
-                    cmdQueue.DeleteMessage(cmd);
+                    cmdQueue.DeleteMessage(nextCmd);
                 }
 
                 while (crawlYes)
                 {
-                    
+
                     //check for command
-                    if (cmdQueue.PeekMessage() != null)
+                    nextCmd = cmdQueue.GetMessage();
+                    if (nextCmd != null)
                     {
-                        CloudQueueMessage cmd = cmdQueue.GetMessage();
-                        string cmdString = cmd.AsString;
+                        string cmdString = nextCmd.AsString;
                         if (cmdString.Equals("stop"))
                         {
                             //stop crawling
                             crawlYes = false;
                         }
-                        cmdQueue.DeleteMessage(cmd);
+                        cmdQueue.DeleteMessage(nextCmd);
                     }
 
-                    if (queue.PeekMessage() != null)
+                    //read the queue msg and parse
+                    CloudQueueMessage retrievedMessage = queue.GetMessage();
+                    if (retrievedMessage != null)
                     {
-                        //read the queue msg and parse
-                        CloudQueueMessage retrievedMessage = queue.GetMessage();
-                        if (retrievedMessage != null)
-                        {
-                            string link = retrievedMessage.AsString;
-                            if (link.EndsWith("robots.txt")) {
-                                parseRobot(link);
-                            }
-
-                            else if (link.EndsWith(".xml"))
-                            {
-                                parseXml(link);
-                            }
-                            else
-                            //should account for ones that does not end with '/'
-                            //what if link ends with index.html or ends with a '/' (will have double slash)
-                            {
-                                parseHtml(link);
-                            }
-
-                            //delete when done
-                            queue.DeleteMessage(retrievedMessage);
+                        string link = retrievedMessage.AsString;
+                        if (link.EndsWith("robots.txt")) {
+                            parseRobot(link);
                         }
+
+                        else if (link.EndsWith(".xml"))
+                        {
+                            parseXml(link);
+                        }
+                        else
+                        //should account for ones that does not end with '/'
+                        //what if link ends with index.html or ends with a '/' (will have double slash)
+                        {
+                            parseHtml(link);
+                        }
+
+                        //delete when done
+                        queue.DeleteMessage(retrievedMessage);
                     }
                     else
                     {

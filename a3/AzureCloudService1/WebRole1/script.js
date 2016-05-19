@@ -20,29 +20,28 @@ function callStats() {
             //block.append("<div class='msg'><i>No suggestions found</i></div>");
             //}
             //$("#res").append(block);
-            //},
-            error: function (msg) {
-                console.log('error');
-            }
-        }});
-}
+        },
+        error: function (msg) {
+            console.log('error');
+        }
+    })
+};
 
 
 
 //call sendReq() every time the input changes 
 $(document).ready(function () {
-    while(true) {
-        callStats();
-    }
+    //while(true) {
+        //callStats();
+    //}
 });
 
 $(document).ready(function () {
-    $('#run-button').click(function() {
+    $('#run-button').click(function () {
+        console.log("clicked run button");
         $.ajax({
             type: "POST",
             url: "admin.asmx/startCrawling",
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
             success: function (msg) {
                 // Replace the div's content with the page method's return.
                 console.log(msg);
@@ -52,11 +51,27 @@ $(document).ready(function () {
 
 
     $('#stop-button').click(function() {
-    
+        console.log("clicked stop button");
+        $.ajax({
+            type: "POST",
+            url: "admin.asmx/stopCrawling",
+            success: function (msg) {
+                // Replace the div's content with the page method's return.
+                console.log(msg);
+            }
+        });
     
     });
     $('#clear-button').click(function() {
-    
+        console.log("clicked clear button");
+        $.ajax({
+            type: "POST",
+            url: "admin.asmx/clearIndex",
+            success: function (msg) {
+                // Replace the div's content with the page method's return.
+                console.log(msg);
+            }
+        });
     
     });
 });
