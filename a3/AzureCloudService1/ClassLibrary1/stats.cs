@@ -9,8 +9,11 @@ namespace ClassLibrary1
 {
     public class Stats : TableEntity
     {
-        public int tableSize { get; set; }
+        //A class for keeping the stats of the application, including
+        //the table size, worker state, last 10 links crawled, last 10 error urls
+        //and the number of total urls founded
 
+        public int tableSize { get; set; }
         public string workerState { get; set; }
         public string lastCrawled { get; set; }
         public string tenErrors { get; set; }
@@ -29,7 +32,6 @@ namespace ClassLibrary1
             this.tenErrors = errors;
             this.totalUrls = total;
         }
-
 
 
     }

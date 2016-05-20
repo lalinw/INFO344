@@ -31,6 +31,9 @@ namespace WebRole1
         
         public bool firstRun = true; 
 
+
+        //pre:  takes no parameter
+        //post: starts the crawler from 2 root sites' robots, CNN and BleacherReport
         [WebMethod]
         public string startCrawling()
         {
@@ -52,8 +55,8 @@ namespace WebRole1
         }
 
 
-        //helper method, called from startCrawling()
-        //adds a url to crawlQueue to crawl
+        //pre:  takes a link as a string
+        //post: Helper method that adds a link to be crawled to the crawlqueue
         private string addToQueue(string url)
         {
             CloudQueue queue = getQueue();
@@ -64,6 +67,9 @@ namespace WebRole1
             return "success";
         }
 
+
+        //pre:  takes no parameter
+        //post: stops the crawler (sends a request to stop it)
         [WebMethod]
         public string stopCrawling()
         {
@@ -72,6 +78,9 @@ namespace WebRole1
             return "stopped crawling";
         }
 
+
+        //pre:  takes no parameter
+        //post: resumes the crawler 
         [WebMethod]
         public string resumeCrawling()
         {
@@ -80,6 +89,9 @@ namespace WebRole1
             return "resumed crawling";
         }
 
+        //pre:  takes no parameter
+        //post: Clears the index; 
+        //      deletes the table, clears the queue and reset the stats
         [WebMethod]
         public string clearIndex()
         {
@@ -95,6 +107,8 @@ namespace WebRole1
             return "table and queue and stats cleared";
         }
 
+        //pre:  takes an HTML link as a string
+        //post: search for the title of the html page and return as a string
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public string getPageTitle(string url)
@@ -114,8 +128,9 @@ namespace WebRole1
             }
             return new JavaScriptSerializer().Serialize(title);
         }
-        //search implementation
-
+        
+        //pre:  takes a string
+        //post: returns the MD5 hash version of the input
         private static string createMD5(string input)
         {
             // Use input string to calculate MD5 hash
@@ -134,26 +149,24 @@ namespace WebRole1
             }
         }
 
+        //pre:  takes no parameter
+        //post: returns a JSON string of the current stats
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public string getStats()
         {
-           
             //cpu utilization, ram
             PerformanceCounter ramAvailable = new PerformanceCounter("Memory", "Available MBytes");
             var ramFree = "" + ramAvailable.NextValue();
 
-            
             PerformanceCounter cpuCounter;
             cpuCounter = new PerformanceCounter("Processor", "% Processor Time");
             cpuCounter.CategoryName = "Processor";
             cpuCounter.CounterName = "% Processor Time";
             cpuCounter.InstanceName = "_Total";
             var cpuUsed = cpuCounter.NextValue() + "%";
-
-
             
-            //urls crawled, last 10 crawled
+            //urls crawled, last 10 crawled, table size, worker state, total urls, errors
             CloudTable stat = statTable();
             TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
             TableResult retrievedResult = stat.Execute(retrieveOperation);
@@ -179,14 +192,11 @@ namespace WebRole1
                 lastCrawled = "";
                 errors = "";
             }
-            
 
             //size of queue, size of index(table of crawled data)
             CloudQueue queue = getQueue();
             queue.FetchAttributes();
             string curQueueSize = "" + queue.ApproximateMessageCount;
-
-
 
             List<string> stats = new List<string>();
             stats.Add(workerState);
@@ -197,13 +207,39 @@ namespace WebRole1
             stats.Add(totalurls);
             stats.Add(lastCrawled);
             stats.Add(errors);
-            
             return new JavaScriptSerializer().Serialize(stats); 
         }
 
-        
+        //post: resets the table size
+        private string resetTableSize()
+        {
+            CloudTable table = statTable();
+            TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
+            TableResult retrievedResult = table.Execute(retrieveOperation);
+            Stats updateEntity = (Stats)retrievedResult.Result;
+            //update the column
+            updateEntity.tableSize = 0;
+            TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(updateEntity);
+            table.Execute(insertOrReplaceOperation);
+            return "update tableSize";
+        }
 
-        //queues & tables
+        //post: resets the number of total urls found
+        private string resetTotalUrls()
+        {
+            CloudTable table = statTable();
+            TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
+            TableResult retrievedResult = table.Execute(retrieveOperation);
+            Stats updateEntity = (Stats)retrievedResult.Result;
+            //update the column
+            updateEntity.totalUrls = 0;
+            TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(updateEntity);
+            table.Execute(insertOrReplaceOperation);
+            return "update total urls";
+        }
+
+
+        //Helper methods to retrieve the queue and table
         private CloudQueue getQueue()
         {
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
@@ -249,33 +285,6 @@ namespace WebRole1
         }
 
 
-        private string resetTableSize()
-        {
-
-            CloudTable table = statTable();
-            TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
-            TableResult retrievedResult = table.Execute(retrieveOperation);
-            Stats updateEntity = (Stats)retrievedResult.Result;
-            //update the column
-            updateEntity.tableSize = 0;
-            TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(updateEntity);
-            table.Execute(insertOrReplaceOperation);
-            return "update tableSize";
-        }
-
-
-        private string resetTotalUrls()
-        {
-            CloudTable table = statTable();
-            TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
-            TableResult retrievedResult = table.Execute(retrieveOperation);
-            Stats updateEntity = (Stats)retrievedResult.Result;
-            //update the column
-            updateEntity.totalUrls = 0;
-            TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(updateEntity);
-            table.Execute(insertOrReplaceOperation);
-            return "update total urls";
-        }
 
     }
 }

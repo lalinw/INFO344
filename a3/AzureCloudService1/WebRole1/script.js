@@ -1,4 +1,5 @@
 ﻿//AJAX call to getStates() in the ASMX file
+//display stats
 function callStats() {
     $.ajax({
         type: "POST",
@@ -47,7 +48,7 @@ function callStats() {
     });
 };
 
-
+//controls and calling the stats function 
 $(document).ready(function () {
     $('#run-button').click(function () {
         console.log("clicked run button");

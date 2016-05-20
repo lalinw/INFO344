@@ -26,8 +26,8 @@ namespace WorkerRole1
 
         private static HashSet<string> visitedLinks = new HashSet<string>(); //store visited Links
         private static Dictionary<string, List<string>> disallowList = new Dictionary<string, List<string>>();
-        //private StreamWriter sw = new StreamWriter("C:\\Users\\iGuest\\Desktop\\inqueue.txt");
 
+        //initialize the stats parameters for the tables and queues etc.
         public static List<string> lastTen = new List<string> { };
         public static List<string> tenErrors = new List<string> { };
         public static int tableSize = 0;
@@ -36,7 +36,6 @@ namespace WorkerRole1
 
         public override void Run()
         {
-            
             CloudQueue queue = getQueue();
             CloudTable table = getTable();
             CloudTable stat = statTable();
@@ -50,7 +49,6 @@ namespace WorkerRole1
 
             while (true)
             {
-
                 //check for command
                 CloudQueueMessage nextCmd = cmdQueue.GetMessage();
                 if (nextCmd != null)
@@ -58,7 +56,7 @@ namespace WorkerRole1
                     string cmdString = nextCmd.AsString;
                     if (cmdString.Equals("run"))
                     {
-                        //start/resume crawling
+                        //start or resume crawling
                         crawlYes = true;
                         updateWorkerState("Loading");
                     }
@@ -67,7 +65,6 @@ namespace WorkerRole1
 
                 while (crawlYes)
                 {
-
                     //check for command
                     nextCmd = cmdQueue.GetMessage();
                     if (nextCmd != null)
@@ -80,10 +77,8 @@ namespace WorkerRole1
                             updateWorkerState("Stopped");
                         }
                         cmdQueue.DeleteMessage(nextCmd);
-                        
                     }
-
-                    //read the queue msg and parse
+                    
                     CloudQueueMessage retrievedMessage = queue.GetMessage();
                     if (retrievedMessage != null)
                     {
@@ -96,14 +91,11 @@ namespace WorkerRole1
                             parseXml(link);
                         }
                         else
-                        //should account for ones that does not end with '/'
-                        //what if link ends with index.html or ends with a '/' (will have double slash)
                         {
                             updateWorkerState("Crawling");
                             parseHtml(link);
                         }
-
-                        //delete when done
+                        //delete the message when done
                         queue.DeleteMessage(retrievedMessage);
                     }
                     else
@@ -116,9 +108,8 @@ namespace WorkerRole1
             }
         }
 
-        
-
-        private string updateTableSize(int x)
+        //post: increase the table size column in the stat table by 1
+        private string updateTableSize()
         {
             CloudTable table = statTable();
             TableQuery<Stats> search = new TableQuery<Stats>().Where(
@@ -129,12 +120,11 @@ namespace WorkerRole1
             retrieved.tableSize++;
             TableOperation upsertOperation = TableOperation.InsertOrReplace(retrieved);
             table.Execute(upsertOperation);
-
             return "update tableSize";
         }
 
-
-        private string updateTotalUrls(int x)
+        //post: increase the total urls column in the stat table by 1
+        private string updateTotalUrls()
         {
             CloudTable table = statTable();
             TableQuery<Stats> search = new TableQuery<Stats>().Where(
@@ -145,10 +135,11 @@ namespace WorkerRole1
             retrieved.totalUrls++;
             TableOperation upsertOperation = TableOperation.InsertOrReplace(retrieved);
             table.Execute(upsertOperation);
-
             return "update total urls";
         }
 
+        //pre:  takes the name of the new state as string
+        //post: sets the worker state to the new state 
         private string updateWorkerState(string newState)
         {
             CloudTable table = statTable();
@@ -163,6 +154,10 @@ namespace WorkerRole1
             return "update worker state";
         }
 
+        //pre:  takes an HTML link as string
+        //post: adds a link to the end of the last crawled list
+        //      removes the list if it already has 10 elements
+        //      to keep the list size <= 10
         private string updateLast10Links(string newlink)
         {
             CloudTable table = statTable();
@@ -184,6 +179,10 @@ namespace WorkerRole1
             return "update most recent links crawled";
         }
 
+        //pre:  takes an HTML link as string
+        //post: adds a link to the end of the error list
+        //      removes the list if it already has 10 elements
+        //      to keep the list size <= 10
         private string updateErrorLinks(string newlink)
         {
             CloudTable table = statTable();
@@ -205,8 +204,9 @@ namespace WorkerRole1
             return "update last 10 error links";
         }
 
-      
-
+        //pre:  take a link as string
+        //post: checks the link with the conditions according to the specs
+        //      returns true if it is valid to crawl, false otherwise
         private bool htmlOkayToAdd(string link) {
 
             Uri linkUri = new Uri(link);
@@ -247,7 +247,9 @@ namespace WorkerRole1
             }
         }
 
-        //checks if the link from bleacherreport is nba-related
+
+        //pre:  take a link as string
+        //post: Checks if the link from bleacherreport is nba-related
         private bool nbaXML(string link) {
             Uri linkUri = new Uri(link);
             if (linkUri.Host.EndsWith("bleacherreport.com"))
@@ -261,11 +263,14 @@ namespace WorkerRole1
             return false;
         }
 
+        //pre:  takes a link as string
+        //post: parse HTML for links inside the page,
+        //      mark the link as visited and crawled,
+        //      add the new links to the queue
         private string parseHtml(string link) {
             //remove disallowed ones
             //remove already visited ones 
             //put valid links in queue
-
             HtmlWeb web = new HtmlWeb();
             try
             {
@@ -317,7 +322,6 @@ namespace WorkerRole1
                                 {
                                     addToTable(link, title);
                                     visitedLinks.Add(link);
-
                                     //parsing the page
                                     foreach (HtmlNode linkitem in doc.DocumentNode.SelectNodes("//a[@href]"))
                                     {
@@ -335,7 +339,6 @@ namespace WorkerRole1
                                                 if (htmlOkayToAdd(newLink) && !visitedLinks.Contains(newLink))
                                                 {
                                                     addToQueue(newLink);
-
                                                 }
                                             }
                                         }
@@ -354,8 +357,6 @@ namespace WorkerRole1
                                 addToErrorTable(link, errmsg);
                                 visitedLinks.Add(link);
                             }
-
-
                         }
                     }
                 }
@@ -366,10 +367,12 @@ namespace WorkerRole1
                 addToErrorTable(link, errmsg);
                 visitedLinks.Add(link);
             }
-            
             return "parsed HTML";
         }
 
+
+        //pre:  take a link as string
+        //post: parse the XML according to the specs
         private string parseXml(string link) {
             Uri linkUri = new Uri(link);
 
@@ -397,7 +400,6 @@ namespace WorkerRole1
 
                 foreach (var smElement in top)
                 {
-
                     DateTime dateOfLink = DateTime.Now;
                     if (smElement.Element(date) != null)
                     {
@@ -413,9 +415,7 @@ namespace WorkerRole1
                         if (!visitedLinks.Contains(link)) {
                             addToQueue(element);
                         }
-                        
                     }
-
                 }
             }
             else if (linkUri.Host.EndsWith("bleacherreport.com"))
@@ -442,6 +442,9 @@ namespace WorkerRole1
             return "parsed XML";
         }
 
+        //pre:  take a link to robots.txt as string
+        //post: parse according to specs,
+        //      don't parse if it is in the disallowed condition
         private string parseRobot(string robotLink)
         {
             List<string> disallow = new List<string>();
@@ -474,6 +477,9 @@ namespace WorkerRole1
             return "done with " + root.Host + " robots.txt";
         }
 
+
+        //pre:  take a link as string
+        //post: adds the link to the crawl queue to be crawled
         private string addToQueue(string url)
         {
             CloudQueue queue = getQueue();
@@ -482,11 +488,12 @@ namespace WorkerRole1
             CloudQueueMessage message = new CloudQueueMessage(msg);
             queue.AddMessageAsync(message);
             //sw.WriteLine(msg);
-            updateTotalUrls(1);
+            updateTotalUrls();
             return "add to queue";
         }
 
-        //add a Page object to table
+        //pre:  take a link as string and a page title as string
+        //post: add a Page object to index table with that url and title
         private string addToTable(string url, string pageTitle) {
             CloudTable table = getTable();
             //add this one link to table
@@ -494,11 +501,13 @@ namespace WorkerRole1
             Page newEntity = new Page(url, pageTitle);
             TableOperation insertOperation = TableOperation.Insert(newEntity);
             table.Execute(insertOperation);
-            updateTableSize(1);
+            updateTableSize();
             updateLast10Links(url);
             return "add to table";
         }
 
+        //pre:  take a link as string and a page title as string
+        //post: add a Page object to the error table with that url and title
         private string addToErrorTable(string url, string pageTitle)
         {
             CloudTable table = errorTable();
@@ -547,10 +556,9 @@ namespace WorkerRole1
                 await Task.Delay(1000);
             }
         }
-        
-        
-        
-        //queues & tables
+
+
+        //Helper methods to retrieve the queue and table
         private CloudQueue getQueue()
         {
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);

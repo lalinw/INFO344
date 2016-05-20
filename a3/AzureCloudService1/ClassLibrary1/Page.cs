@@ -10,7 +10,7 @@ namespace ClassLibrary1
 {
     public class Page : TableEntity
     {
-        //private DateTime datetime {get; set;}
+        //a class to store an HTML page and its title
         public string title { get; set; }
         public string url { get; set; }
 
@@ -21,7 +21,6 @@ namespace ClassLibrary1
         {
             this.PartitionKey = "title";
             this.RowKey = createMD5(url);
-            //this.RowKey = Guid.NewGuid().ToString();
             this.url = url;
             this.title = pageTitle;
         }
