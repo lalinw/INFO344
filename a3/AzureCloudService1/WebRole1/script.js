@@ -13,11 +13,12 @@ function callStats() {
 
             $('#state').html(stats[0]);
             $('#cpu').html(stats[1]);
-            $('#ram').html(stats[2]);
+            $('#ram').html(stats[2] + " MB");
             $('#linksinqueue').html(stats[3]);
             $('#tablesize').html(stats[4]);
             $('#totalurls').html(stats[5]);
-  
+            
+            //last 10 links
             $('#tenlinks').html("");
             var linkStr = stats[6];
             var links = linkStr.split(',');
@@ -28,7 +29,7 @@ function callStats() {
             if (linkStr != "") {
                 $('#tenlinks').append(lnk);
             }
-            
+            //links for error pages
             $('#errorlinks').html("");
             var errorStr = stats[7];
             var err = $("<ul>");
@@ -47,8 +48,6 @@ function callStats() {
 };
 
 
-
-
 $(document).ready(function () {
     $('#run-button').click(function () {
         console.log("clicked run button");
@@ -56,7 +55,6 @@ $(document).ready(function () {
             type: "POST",
             url: "admin.asmx/startCrawling",
             success: function (msg) {
-                // Replace the div's content with the page method's return.
                 console.log(msg);
             }
         });
@@ -70,7 +68,6 @@ $(document).ready(function () {
             type: "POST",
             url: "admin.asmx/stopCrawling",
             success: function (msg) {
-                // Replace the div's content with the page method's return.
                 console.log(msg);
             }
         });
@@ -83,16 +80,14 @@ $(document).ready(function () {
             type: "POST",
             url: "admin.asmx/clearIndex",
             success: function (msg) {
-                // Replace the div's content with the page method's return.
                 console.log(msg);
             }
         });
         alert("Table Cleared, Queue Deleted and Counters reset");
-    
     });
 
     $(function () {
-        setTimeout(makeStatsCall,2000)
+        setTimeout(makeStatsCall, 2000);
     });
 
     function makeStatsCall() {
@@ -100,21 +95,22 @@ $(document).ready(function () {
     }
 
     $('#find').click(function () {
+        var theurl = $('#searchtitle').val().trim();
         console.log('searching for title');
         $.ajax({
             type: "POST",
-            url: "admin.asmx/getPagetitle",
-            data: JSON.stringify({ url: $('#searchtitle').value }),
+            url: "admin.asmx/getPageTitle",
+            contentType: "application/json; charset=utf-8",
+            data: JSON.stringify({ url: theurl }),
             dataType: "json",
             success: function (result) {
-                // Replace the div's content with the page method's return.
                 $('#results').html(result.d);
             },
             error: function (msg) {
                 $('#results').html("No results to display");
             }
         });
-
-    })
+    });
+    
 
 });

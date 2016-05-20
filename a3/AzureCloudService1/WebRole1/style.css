@@ -1,5 +1,7 @@
 ﻿body {
     text-align: center;
+    font-family: 'Ubuntu', sans-serif;
+    margin-top: 100px;
 }
 
 div.links > div > div > div {
@@ -13,11 +15,6 @@ div.links > div > div > div {
 }
 
 
-#graph {
-    height: 300px;
-    background-color:aliceblue;
-}
-
 .statbox {
     padding: 0px 10px 25px 10px;
     
@@ -28,10 +25,11 @@ div.statbox > div {
 }
 
 #searchtitle {
-    width: 80%;
+    width: 50%;
 }
 
-#results {
-    text-align: left !important; 
+div#results {
+    text-align: center;
+    font-size: 22px;
 }
 

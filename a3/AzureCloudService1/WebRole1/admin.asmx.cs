@@ -104,7 +104,15 @@ namespace WebRole1
             TableOperation retrieveOperation = TableOperation.Retrieve<Page>("title", rowKey);
             TableResult retrievedResult = table.Execute(retrieveOperation);
             Page results = (Page)retrievedResult.Result;
-            return new JavaScriptSerializer().Serialize(results.title);
+            string title;
+            if (results == null)
+            {
+                title = "No results to display";
+            }
+            else {
+                title = results.title;
+            }
+            return new JavaScriptSerializer().Serialize(title);
         }
         //search implementation
 
