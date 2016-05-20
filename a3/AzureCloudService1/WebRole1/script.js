@@ -55,6 +55,7 @@ $(document).ready(function () {
         $.ajax({
             type: "POST",
             url: "admin.asmx/startCrawling",
+            contentType: "application/json; charset=utf-8",
             success: function (msg) {
                 console.log(msg);
             }
@@ -68,6 +69,7 @@ $(document).ready(function () {
         $.ajax({
             type: "POST",
             url: "admin.asmx/stopCrawling",
+            contentType: "application/json; charset=utf-8",
             success: function (msg) {
                 console.log(msg);
             }
@@ -80,6 +82,7 @@ $(document).ready(function () {
         $.ajax({
             type: "POST",
             url: "admin.asmx/clearIndex",
+            contentType: "application/json; charset=utf-8",
             success: function (msg) {
                 console.log(msg);
             }
