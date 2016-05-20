@@ -60,9 +60,9 @@ namespace WorkerRole1
                     {
                         //start/resume crawling
                         crawlYes = true;
+                        updateWorkerState("Loading");
                     }
                     cmdQueue.DeleteMessage(nextCmd);
-                    updateWorkerState("Loading");
                 }
 
                 while (crawlYes)
@@ -77,9 +77,10 @@ namespace WorkerRole1
                         {
                             //stop crawling
                             crawlYes = false;
+                            updateWorkerState("Stopped");
                         }
                         cmdQueue.DeleteMessage(nextCmd);
-                        updateWorkerState("Stopped");
+                        
                     }
 
                     //read the queue msg and parse
@@ -93,12 +94,12 @@ namespace WorkerRole1
                         else if (link.EndsWith(".xml"))
                         {
                             parseXml(link);
-                            updateWorkerState("Crawling");
                         }
                         else
                         //should account for ones that does not end with '/'
                         //what if link ends with index.html or ends with a '/' (will have double slash)
                         {
+                            updateWorkerState("Crawling");
                             parseHtml(link);
                         }
 
@@ -175,7 +176,7 @@ namespace WorkerRole1
                 lastTen.RemoveAt(0);
             }
             lastTen.Add(newlink);
-            string recentLinks = listToCommaString(lastTen);
+            string recentLinks = string.Join(",", lastTen.ToArray());
             retrieved.lastCrawled = recentLinks;
             TableOperation upsertOperation = TableOperation.InsertOrReplace(retrieved);
             table.Execute(upsertOperation);
@@ -196,7 +197,7 @@ namespace WorkerRole1
                 tenErrors.RemoveAt(0);
             }
             tenErrors.Add(newlink);
-            string recentLinks = listToCommaString(tenErrors);
+            string recentLinks = string.Join(",", tenErrors.ToArray());
             retrieved.tenErrors = recentLinks;
             TableOperation upsertOperation = TableOperation.InsertOrReplace(retrieved);
             table.Execute(upsertOperation);
@@ -204,19 +205,7 @@ namespace WorkerRole1
             return "update last 10 error links";
         }
 
-        private string listToCommaString(List<string> list) {
-            string commaString = "";
-            if (list.Count > 0)
-            {
-                commaString = commaString + list[0];
-                for (int i = 1; i < list.Count - 1; i++)
-                {
-                    commaString = commaString + "," + list[i];
-                }
-            }
-            return commaString;
-        }
-
+      
 
         private bool htmlOkayToAdd(string link) {
 
@@ -278,82 +267,104 @@ namespace WorkerRole1
             //put valid links in queue
 
             HtmlWeb web = new HtmlWeb();
-            HtmlDocument doc = web.Load(link);
-            string title = doc.DocumentNode.SelectSingleNode("//head/title").InnerHtml;
-
-            if (!title.Equals(""))
+            try
             {
-                Uri linkUri = new Uri(link);
+                HtmlDocument doc = web.Load(link);
+                string title = doc.DocumentNode.SelectSingleNode("//head/title").InnerHtml;
 
-                bool validRoot = htmlOkayToAdd(link);
-
-                if (validRoot)
+                if (!title.Equals(""))
                 {
-                    var linkEnding = linkUri.Segments[linkUri.Segments.Length - 1];
+                    Uri linkUri = new Uri(link);
 
+                    bool validRoot = htmlOkayToAdd(link);
 
-                    //cleaning the link, so it's easier to check for duplicates
-                    if (linkEnding.ToLower().Contains("index.html"))
+                    if (validRoot)
                     {
+                        //cleaning the link in case of a request
                         link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath;
-                    }
-                    else if (linkEnding.ToLower().Contains("index.htm"))
-                    {
-                        link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath;
-                    }
-                    else if (!linkUri.Query.Equals(""))
-                    {
-                        link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath + "/";
-                    }
-                    else if (!linkEnding.Contains(".") && !linkEnding.Contains("/"))
-                    {
-                        link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath + "/";
-                    }
 
-                    if (Uri.IsWellFormedUriString(link, UriKind.Absolute))
-                    {
-                        //check if the cleaned link is a "good" link or not
-                        var request = HttpWebRequest.Create(link);
-                        request.Method = "HEAD";
-                        var response = (HttpWebResponse)request.GetResponse();
-
-                        if (!visitedLinks.Contains(link) && response.StatusCode == HttpStatusCode.OK)
-                        //check if visited
+                        /*
+                        var linkEnding = linkUri.Segments[linkUri.Segments.Length - 1];
+                        //cleaning the link, so it's easier to check for duplicates
+                        if (linkEnding.ToLower().Contains("index.html"))
                         {
-                            addToTable(link, title);
-                            visitedLinks.Add(link);
+                            link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath;
+                        }
+                        else if (linkEnding.ToLower().Contains("index.htm"))
+                        {
+                            link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath;
+                        }
+                        else if (!linkUri.Query.Equals("") || !linkEnding.Contains("."))
+                        {
+                            link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath + "/";
+                        }
+                        else if (!linkEnding.Contains(".") && !linkEnding.Contains("/"))
+                        {
+                            link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath + "/";
+                        }
+                        */
 
-                            //parsing the page
-                            foreach (HtmlNode linkitem in doc.DocumentNode.SelectNodes("//a[@href]"))
-                            {
-                                // Get the value of the HREF attribute
-                                string hrefValue = linkitem.GetAttributeValue("href", "");
-                                if (Uri.IsWellFormedUriString(hrefValue, UriKind.Absolute) && htmlOkayToAdd(hrefValue) && !visitedLinks.Contains(hrefValue))
+                        if (Uri.IsWellFormedUriString(link, UriKind.Absolute))
+                        {
+                            //check if the cleaned link is a "good" link or not
+                            try {
+                                var request = HttpWebRequest.Create(link);
+                                request.Method = "HEAD";
+                                var response = (HttpWebResponse)request.GetResponse();
+
+                                if (!visitedLinks.Contains(link) && response.StatusCode == HttpStatusCode.OK)
+                                //check if visited
                                 {
-                                    addToQueue(hrefValue);
-                                }
-                                else if (Uri.IsWellFormedUriString(hrefValue, UriKind.Relative))
-                                {
-                                    if (hrefValue != "/")
+                                    addToTable(link, title);
+                                    visitedLinks.Add(link);
+
+                                    //parsing the page
+                                    foreach (HtmlNode linkitem in doc.DocumentNode.SelectNodes("//a[@href]"))
                                     {
-                                        string newLink = linkUri.Scheme + "://" + linkUri.Host + hrefValue;
-                                        if (htmlOkayToAdd(newLink) && !visitedLinks.Contains(newLink))
+                                        // Get the value of the HREF attribute
+                                        string hrefValue = linkitem.GetAttributeValue("href", "");
+                                        if (Uri.IsWellFormedUriString(hrefValue, UriKind.Absolute) && htmlOkayToAdd(hrefValue) && !visitedLinks.Contains(hrefValue))
                                         {
-                                            addToQueue(newLink);
-                                            
+                                            addToQueue(hrefValue);
+                                        }
+                                        else if (Uri.IsWellFormedUriString(hrefValue, UriKind.Relative))
+                                        {
+                                            if (hrefValue != "/")
+                                            {
+                                                string newLink = linkUri.Scheme + "://" + linkUri.Host + hrefValue;
+                                                if (htmlOkayToAdd(newLink) && !visitedLinks.Contains(newLink))
+                                                {
+                                                    addToQueue(newLink);
+
+                                                }
+                                            }
                                         }
                                     }
+
+                                }
+                                else if (!visitedLinks.Contains(link) && response.StatusCode != HttpStatusCode.OK)
+                                {
+                                    addToErrorTable(link, title);
+                                    visitedLinks.Add(link);
                                 }
                             }
-                            
-                        }
-                        else if (!visitedLinks.Contains(link) && response.StatusCode != HttpStatusCode.OK)
-                        {
-                            addToErrorTable(link, title);
-                            visitedLinks.Add(link);
+                            catch (Exception e)
+                            {
+                                string errmsg = e.Message;
+                                addToErrorTable(link, errmsg);
+                                visitedLinks.Add(link);
+                            }
+
+
                         }
                     }
                 }
+            }
+            catch (Exception e)
+            {
+                string errmsg = e.Message;
+                addToErrorTable(link, errmsg);
+                visitedLinks.Add(link);
             }
             
             return "parsed HTML";

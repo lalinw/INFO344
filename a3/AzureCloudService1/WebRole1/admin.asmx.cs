@@ -133,7 +133,7 @@ namespace WebRole1
            
             //cpu utilization, ram
             PerformanceCounter ramAvailable = new PerformanceCounter("Memory", "Available MBytes");
-            var ramFree = ramAvailable.NextValue() + "MB";
+            var ramFree = "" + ramAvailable.NextValue();
 
             
             PerformanceCounter cpuCounter;
@@ -143,18 +143,35 @@ namespace WebRole1
             cpuCounter.InstanceName = "_Total";
             var cpuUsed = cpuCounter.NextValue() + "%";
 
-           
 
+            
             //urls crawled, last 10 crawled
             CloudTable stat = statTable();
             TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("stats", "this");
             TableResult retrievedResult = stat.Execute(retrieveOperation);
             Stats results = (Stats)retrievedResult.Result;
-            string tableSize = "" + results.tableSize;
-            string workerState = results.workerState;
-            string totalurls = "" + results.totalUrls;
-            string lastCrawled = results.lastCrawled;
-            string errors = results.tenErrors;
+            string tableSize;
+            string workerState;
+            string totalurls;
+            string lastCrawled;
+            string errors;
+
+            try
+            {
+                tableSize = "" + results.tableSize;
+                workerState = results.workerState;
+                totalurls = "" + results.totalUrls;
+                lastCrawled = results.lastCrawled;
+                errors = results.tenErrors;
+            }
+            catch {
+                tableSize = "0";
+                workerState = "Idling";
+                totalurls = "0";
+                lastCrawled = "";
+                errors = "";
+            }
+            
 
             //size of queue, size of index(table of crawled data)
             CloudQueue queue = getQueue();

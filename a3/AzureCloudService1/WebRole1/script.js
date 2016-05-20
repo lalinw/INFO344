@@ -7,9 +7,9 @@ function callStats() {
         dataType: "json",
         success: function (result) {
             console.log('success');
-            
+
             var stats = JSON.parse(result.d);
-            console.log(stats);
+            //console.log(stats);
 
             $('#state').html(stats[0]);
             $('#cpu').html(stats[1]);
@@ -19,47 +19,37 @@ function callStats() {
             $('#totalurls').html(stats[5]);
   
             $('#tenlinks').html("");
-            var linksStr = stats[6];
-            var links = linksStr.split(',');
-            var lnk = $("<div>");
-            for (var i = 0; i < links.size; i++) {
-                lnk.append("<p>" + links[i] + "</p>");
-                console.log(links[i]);
+            var linkStr = stats[6];
+            var links = linkStr.split(',');
+            var lnk = $("<ul>");
+            for (var i = 0; i < links.length; i++) {
+                lnk.append("<li>" + links[i] + "</li>");
+            }
+            if (linkStr != "") {
+                $('#tenlinks').append(lnk);
             }
             
-            $('#tenlinks').append(lnk);
-
-
-            //$('#errorlinks').html("");
-            var err = $("<div>");
-            var errorsStr = stats[7];
-            var errors = errorsStr.split(',');
-
-            $('#errorlinks');
+            $('#errorlinks').html("");
+            var errorStr = stats[7];
+            var err = $("<ul>");
+            var errors = errorStr.split(',');
+            for (var i = 0; i < errors.length; i++) {
+                err.append("<li>" + errors[i] + "</li>");
+            }
+            if (errorStr != "") {
+                $('#errorlinks').append(err);
+            }
         },
         error: function (msg) {
             console.log('error');
         }
     });
 };
-//$('#res').html(""); //clears the div
-//var obj = JSON.parse(result.d);
-//var cleanInput = prf.trim().toLowerCase();
 
-//var block = $("<div>").addClass("sblock");
-// iterate over the array and build the list
-//for (var i = 0; i < obj.length; i++) {
-//block.append("<div>" + cleanInput + "<b>" + obj[i] + "</b>" + "</div>");
-//}
-//if (cleanInput != "" && obj.length == 0) {
-//block.append("<div class='msg'><i>No suggestions found</i></div>");
-//}
-//$("#res").append(block);
 
 
 
 $(document).ready(function () {
-
     $('#run-button').click(function () {
         console.log("clicked run button");
         $.ajax({
@@ -102,11 +92,11 @@ $(document).ready(function () {
     });
 
     $(function () {
-        setTimeout(makeStatsCall, 1000)
+        setTimeout(makeStatsCall,2000)
     });
 
     function makeStatsCall() {
-        setInterval(callStats, 300);
+        setInterval(callStats, 500);
     }
 
     $('#find').click(function () {
