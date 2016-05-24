@@ -1,0 +1,31 @@
+﻿body {
+}
+
+#maincontent {
+    text-align: center;
+    margin-top: 300px;
+}
+
+input {
+    width: 50%;
+}
+
+
+#res {
+    width: 50%;
+    margin-left: 25%;
+}
+
+div.sblock {
+    border-style: solid;
+    border-width: 1px;
+    border-color: lightgrey;
+}
+
+div.sblock > div:hover {
+    background-color: aliceblue;
+}
+
+div.msg {
+    color: gray;
+}

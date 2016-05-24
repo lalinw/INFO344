@@ -1,0 +1,85 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Crawler Dashboard</title>
+	<meta charset="utf-8" />
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <link href='https://fonts.googleapis.com/css?family=Ubuntu' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="style_dashboard.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    <script src="script_dashboard.js"></script>
+</head>
+<body>
+    <h1><b>Crawler Admin Dashboard</b></h1>
+    <div class="status container">
+        <h2>Status</h2>
+        <div class="row">
+            <div class="col-sm-8">
+                <div id="graph">
+                    <img src="graph_comingsoon.png"/>
+                </div>
+                
+            </div>
+            <div class="col-sm-4">
+                <div class="statbox">
+                    <p>Ram Available</p>
+                    <div id="ram">RAM</div>
+                </div>
+                <div class="statbox">
+                    <p>CPU Usage</p>
+                    <div id="cpu">CPU</div>
+                </div>
+                <div class="statbox">
+                    <p>Current Crawler State</p>
+                    <div id="state">State</div>
+                </div>
+                <button id="run-button" class="btn btn-success">Run</button>
+                <button id="stop-button" class="btn btn-primary">Stop</button>
+                <button id="clear-button" class="btn btn-danger">Clear</button>
+
+            </div>  
+        </div>
+        <div class="row">
+            <div class="col-sm-4 statbox">
+                <p>Total Links Crawled</p>
+                <div id="tablesize"></div>
+            </div>
+            <div class="col-sm-4 statbox">
+                <p>Links in the Queue</p>
+                <div id="linksinqueue"></div>
+            </div>
+            <div class="col-sm-4 statbox">
+                <p>Total URLs Found</p>
+                <div id="totalurls"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="search container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div>
+                    Search title by url: <input id="searchtitle" placeholder="http://www.cnn.com"/>
+                    <button id="find" class="btn btn-primary">Search</button>
+                </div>
+                <div id="results"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="links container">
+        <div class="row">
+            <div class="col-lg-12">
+                <h3>10 Most recent links crawled</h3>
+                <div id="tenlinks"></div>
+            </div>
+            <div class="col-lg-12">
+                <h3>10 Most recent errors</h3>
+                <div id="errorlinks"></div>
+            </div>
+        </div>
+    </div>
+
+
+</body>
+</html>

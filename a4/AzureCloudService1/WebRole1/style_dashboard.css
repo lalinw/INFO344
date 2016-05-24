@@ -1,0 +1,32 @@
+﻿body {
+    text-align: center;
+    font-family: 'Ubuntu', sans-serif;
+    margin-top: 100px;
+}
+
+div.links > div > div > div {
+    text-align: left;
+}
+
+.row {
+    padding: 25px 10px;
+}
+
+
+.statbox {
+    padding: 0px 10px 25px 10px;
+}
+
+div.statbox > div {
+    font-size: 25px;
+}
+
+#searchtitle {
+    width: 50%;
+}
+
+div#results {
+    text-align: center;
+    font-size: 22px;
+}
+

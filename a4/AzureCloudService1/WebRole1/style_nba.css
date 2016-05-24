@@ -1,0 +1,113 @@
+body {
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+
+img.profilepic {
+    width: 230px;
+}
+
+div.search {
+    text-align: center;
+}
+
+#searchBar {
+    padding-top: 100px;
+}
+
+.playerResult {
+    margin: auto;
+    margin-top:20px !important;
+    background-image: url("namecard.jpg");
+    height: 220px;
+    width: 650px;
+    color: white;
+}
+
+div.profileImg {
+    position: absolute; 
+    margin-left: 30px;
+    margin-top: 35px; 
+    width: 185px;
+}
+
+div.playerName {
+    position: absolute; 
+    margin-left: 230px;
+    margin-top: 25px; 
+    text-align: left;
+    font-size: 35px; 
+}
+
+div.playerTeam {
+    position: relative; 
+    margin-right: 30px;
+    margin-top: 25px; 
+    float: right;
+    font-size: 35px; 
+}
+
+.playerInfo {
+    position: relative;
+    float: left;
+    left: 270px;
+    top: 77px;
+    
+}
+
+.statName {
+    position: absolute;
+    text-align: right;
+    width: 40px;
+    color:grey;
+}
+
+.stats {
+    position: relative;
+    text-align: left;
+    width: 50px;
+    left: 50px;
+}
+
+.col1 {
+   position: absolute; 
+   left: 0px;
+   top: 0px;
+   width: 100px;
+}
+
+.col2 {
+    position: absolute;
+    width: 200px;
+    left: 90px;
+}
+.col2 > .statName {
+    width: 40%;
+}
+.col2 > .stats {
+    width: 60%;
+    left: 45%;
+}
+.col3 {
+    position: absolute; 
+    left: 280px;
+    width: 100px;
+}
+
+
+.box {
+    width: 40px;
+    padding-top: 5px;
+    padding-bottom: 10px; 
+    text-align: center;
+    margin:auto;
+    margin-bottom: 5px;
+}
+
+.box.ppg {
+    background-color: darkred;
+}
+
+.box.gp {
+    background-color: darkblue;
+}
+
