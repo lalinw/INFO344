@@ -43,7 +43,7 @@ namespace WorkerRole1
             bool crawlYes = true;
 
             //initialize the statTable
-            Stats startStat = new Stats(tableSize, workerState, "", "", totalUrls);
+            Stats startStat = new Stats();
             TableOperation initializeStats = TableOperation.InsertOrReplace(startStat);
             stat.Execute(initializeStats);
 

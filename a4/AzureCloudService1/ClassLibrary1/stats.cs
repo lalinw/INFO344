@@ -20,7 +20,15 @@ namespace ClassLibrary1
         public int totalUrls { get; set; }
 
         //parameterless constructor
-        public Stats() { }
+        public Stats() {
+            this.PartitionKey = "stats";
+            this.RowKey = "this";
+            this.tableSize = 0;
+            this.workerState = "Idling";
+            this.lastCrawled = "";
+            this.tenErrors = "";
+            this.totalUrls = 0;
+        }
 
         public Stats(int tableSize, string workerState, string lastTen, string errors, int total)
         {
