@@ -164,6 +164,9 @@
     <Content Include="admin.asmx" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="getQuerySuggestions.asmx.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WebRole.cs" />
     <Compile Include="admin.asmx.cs">

@@ -40,7 +40,7 @@ namespace WorkerRole1
             CloudTable table = getTable();
             CloudTable stat = statTable();
             CloudQueue cmdQueue = getCommandQueue();
-            bool crawlYes = false;
+            bool crawlYes = true;
 
             //initialize the statTable
             Stats startStat = new Stats(tableSize, workerState, "", "", totalUrls);

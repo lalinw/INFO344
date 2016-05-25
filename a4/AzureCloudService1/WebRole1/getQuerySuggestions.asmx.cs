@@ -10,6 +10,8 @@ using System.Web;
 using System.Web.Script.Serialization;
 using System.Web.Script.Services;
 using System.Web.Services;
+using ClassLibrary1;
+using Microsoft.Azure;
 
 
 
