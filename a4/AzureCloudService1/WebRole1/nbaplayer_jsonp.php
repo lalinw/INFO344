@@ -19,4 +19,3 @@ http://stackoverflow.com/questions/1678214/javascript-how-do-i-create-jsonp
     }
 ?>
 
-JSON P 

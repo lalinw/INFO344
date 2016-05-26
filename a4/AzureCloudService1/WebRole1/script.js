@@ -35,13 +35,22 @@ $(document).ready(function () {
     });
 });
 
+function lookUpPlayer(player) {
+    var name = player.Split(' ').join('+');
+    //turn "jeremy lin" to "jeremy+lin"
 
-//for adjusted PA1
-$.ajax({
-    crossDomain: true,
-    contentType: "application/json; charset=utf-8",
-    url: "nbaplayer_jsonp.php?callback=something",
-    data: { playersearch: x },
-    success: function (result) { },
-    error: function (msg) { }
-})
+    //for adjusted PA1
+    $.ajax({
+        type: "POST",
+        crossDomain: true,
+        contentType: "application/json; charset=utf-8",
+        url: "nbaplayer_jsonp.php?search=jeremy+lin",
+        dataType: "jsonp",
+        success: function (result) {
+
+        },
+        error: function (msg) {
+
+        }
+    });
+}
