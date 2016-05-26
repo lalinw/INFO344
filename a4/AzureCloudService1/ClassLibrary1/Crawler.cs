@@ -18,7 +18,7 @@ namespace ClassLibrary1
         //CloudTable table = getTable();
        // CloudTable stat = statTable();
        // CloudQueue cmdQueue = getCommandQueue();
-        private string checkCommand() {
+        public string checkForCommand() {
             CloudQueue cmdQueue = getCommandQueue();
             CloudQueueMessage nextCmd = cmdQueue.GetMessage();
             if (nextCmd != null)

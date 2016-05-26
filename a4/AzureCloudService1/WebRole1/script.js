@@ -35,3 +35,13 @@ $(document).ready(function () {
     });
 });
 
+
+//for adjusted PA1
+$.ajax({
+    crossDomain: true,
+    contentType: "application/json; charset=utf-8",
+    url: "nbaplayer_jsonp.php?callback=something",
+    data: { playersearch: x },
+    success: function (result) { },
+    error: function (msg) { }
+})
