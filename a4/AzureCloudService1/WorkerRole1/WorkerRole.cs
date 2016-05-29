@@ -515,7 +515,7 @@ namespace WorkerRole1
             Uri root = new Uri(url);
             Page newEntity = new Page(url, pageTitle);
             TableOperation insertOperation = TableOperation.Insert(newEntity);
-            table.Execute(insertOperation);
+            //table.Execute(insertOperation);
             updateErrorLinks(url);
             return "add to error table";
         }

@@ -31,26 +31,28 @@ function sendReq(prf) {
 //call sendReq() every time the input changes 
 $(document).ready(function () {
     $('#searchbar').on('input', function () {
-        sendReq(this.value);
+        //sendReq(this.value);
+    });
+
+    $('#submitbutton').click(function () {
+        lookUpPlayer($('#searchbar').val());
     });
 });
 
 function lookUpPlayer(player) {
-    var name = player.Split(' ').join('+');
+    var name = player.trim().replace(" ", "+");
+    console.log(name);
     //turn "jeremy lin" to "jeremy+lin"
 
-    //for adjusted PA1
     $.ajax({
-        type: "POST",
         crossDomain: true,
         contentType: "application/json; charset=utf-8",
-        url: "nbaplayer_jsonp.php?search=jeremy+lin",
+        url: "http://ec2-52-38-84-159.us-west-2.compute.amazonaws.com/nbaplayer_jsonp.php?search=" + name,
+        data: {},
         dataType: "jsonp",
         success: function (result) {
-
-        },
-        error: function (msg) {
-
+            var data = result[0];
+            console.log(data);
         }
     });
 }
