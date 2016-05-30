@@ -1,7 +1,7 @@
 # INFO344
 **Assignment #01**
 
-"NBA Player Search "
+"NBA Player Search"
 
 Hosted on AWS, RDS; in PHP, Javascript, HTML/CSS;
 
