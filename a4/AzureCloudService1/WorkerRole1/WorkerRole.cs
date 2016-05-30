@@ -16,6 +16,7 @@ using System.Configuration;
 using HtmlAgilityPack;
 using System.IO;
 using ClassLibrary1;
+using System.Text.RegularExpressions;
 
 namespace WorkerRole1
 {
@@ -33,79 +34,64 @@ namespace WorkerRole1
         public static int tableSize = 0;
         public static int totalUrls = 0;
         public static string workerState = "Idling";
+        public static bool crawlYes = true;
 
         public override void Run()
         {
             CloudQueue queue = getQueue();
             CloudTable table = getTable();
             CloudTable stat = statTable();
-            CloudQueue cmdQueue = getCommandQueue();
-            bool crawlYes = true;
 
             //initialize the statTable
             Stats startStat = new Stats();
             TableOperation initializeStats = TableOperation.InsertOrReplace(startStat);
             stat.Execute(initializeStats);
 
-            while (true)
-            {
-                //check for command
-                CloudQueueMessage nextCmd = cmdQueue.GetMessage();
-                if (nextCmd != null)
-                {
-                    string cmdString = nextCmd.AsString;
-                    if (cmdString.Equals("run"))
-                    {
-                        //start or resume crawling
-                        crawlYes = true;
-                        updateWorkerState("Loading");
-                    }
-                    cmdQueue.DeleteMessage(nextCmd);
-                }
-
-                while (crawlYes)
-                {
-                    //check for command
-                    nextCmd = cmdQueue.GetMessage();
-                    if (nextCmd != null)
-                    {
-                        string cmdString = nextCmd.AsString;
-                        if (cmdString.Equals("stop"))
-                        {
-                            //stop crawling
-                            crawlYes = false;
-                            updateWorkerState("Stopped");
-                        }
-                        cmdQueue.DeleteMessage(nextCmd);
-                    }
-                    
+            while (true) {
+                checkCmdQueue();
+                while (crawlYes) {
+                    checkCmdQueue();
                     CloudQueueMessage retrievedMessage = queue.GetMessage();
-                    if (retrievedMessage != null)
-                    {
+                    if (retrievedMessage != null) {
                         string link = retrievedMessage.AsString;
                         if (link.EndsWith("robots.txt")) {
                             parseRobot(link);
-                        }
-                        else if (link.EndsWith(".xml"))
-                        {
+                        } else if (link.EndsWith(".xml")) {
                             parseXml(link);
-                        }
-                        else
-                        {
-                            updateWorkerState("Crawling");
+                        } else {
                             parseHtml(link);
                         }
-                        //delete the message when done
                         queue.DeleteMessage(retrievedMessage);
-                    }
-                    else
-                    {
+                    } else {
+                        checkCmdQueue();
                         updateWorkerState("Idling");
                         Thread.Sleep(50);
                         //if queue is empty, let the worker role sleep
                     }
                 }
             }
+        }
+
+        private string checkCmdQueue() {
+            CloudQueue cmdQueue = getCommandQueue();
+            //check for command
+            CloudQueueMessage nextCmd = cmdQueue.GetMessage();
+            if (nextCmd != null)
+            {
+                string cmdString = nextCmd.AsString;
+                if (cmdString.Equals("run"))
+                {
+                    //start or resume crawling
+                    crawlYes = true;
+                    updateWorkerState("Loading");
+                } else {
+                    //stop crawling
+                    crawlYes = false;
+                    updateWorkerState("Stopped");
+                }
+                cmdQueue.DeleteMessage(nextCmd);
+            }
+            return "check queue";
         }
 
         //post: increase the table size column in the stat table by 1
@@ -268,6 +254,7 @@ namespace WorkerRole1
         //      mark the link as visited and crawled,
         //      add the new links to the queue
         private string parseHtml(string link) {
+            updateWorkerState("Crawling");
             //remove disallowed ones
             //remove already visited ones 
             //put valid links in queue
@@ -374,8 +361,8 @@ namespace WorkerRole1
         //pre:  take a link as string
         //post: parse the XML according to the specs
         private string parseXml(string link) {
+            updateWorkerState("Loading");
             Uri linkUri = new Uri(link);
-
             if (linkUri.Host.EndsWith("cnn.com"))
             {
                 XElement xml = XElement.Load(link);
@@ -447,6 +434,7 @@ namespace WorkerRole1
         //      don't parse if it is in the disallowed condition
         private string parseRobot(string robotLink)
         {
+            updateWorkerState("Loading");
             List<string> disallow = new List<string>();
             WebClient client = new WebClient();
             Stream stream = client.OpenRead(robotLink);
@@ -492,16 +480,27 @@ namespace WorkerRole1
             return "add to queue";
         }
 
+
+        private string[] splitTitle(string pageTitle)
+        {
+            string validChar = Regex.Replace(pageTitle, "[^0-9a-zA-Z ]+", "");
+            string[] keyTitles = validChar.Split(' ');
+            return keyTitles;
+        }
+
         //pre:  take a link as string and a page title as string
         //post: add a Page object to index table with that url and title
         private string addToTable(string url, string pageTitle) {
             CloudTable table = getTable();
             //add this one link to table
-            Uri root = new Uri(url);
-            Page newEntity = new Page(url, pageTitle);
-            TableOperation insertOperation = TableOperation.Insert(newEntity);
-            table.Execute(insertOperation);
-            updateTableSize();
+            string[] keyTitles = splitTitle(pageTitle);
+            for (int i = 0; i < keyTitles.Length; i++)
+            {
+                Page newEntity = new Page(url, pageTitle, keyTitles[i]);
+                TableOperation insertOperation = TableOperation.Insert(newEntity);
+                table.Execute(insertOperation);
+                updateTableSize();
+            }
             updateLast10Links(url);
             return "add to table";
         }
@@ -512,10 +511,13 @@ namespace WorkerRole1
         {
             CloudTable table = errorTable();
             //add this one link to table
-            Uri root = new Uri(url);
-            Page newEntity = new Page(url, pageTitle);
-            TableOperation insertOperation = TableOperation.Insert(newEntity);
-            //table.Execute(insertOperation);
+            string[] keyTitles = splitTitle(pageTitle);
+            for (int i = 0; i < keyTitles.Length; i++)
+            {
+                Page newEntity = new Page(url, pageTitle, "error123456");
+                TableOperation insertOperation = TableOperation.Insert(newEntity);
+                table.Execute(insertOperation);
+            }
             updateErrorLinks(url);
             return "add to error table";
         }

@@ -17,9 +17,9 @@ namespace ClassLibrary1
         //parameterless constructor
         public Page() { }
 
-        public Page(string url, string pageTitle)
+        public Page(string url, string pageTitle, string keyword)
         {
-            this.PartitionKey = "title";
+            this.PartitionKey = keyword;
             this.RowKey = createMD5(url);
             this.url = url;
             this.title = pageTitle;
@@ -43,5 +43,6 @@ namespace ClassLibrary1
             }
         }
 
+        
     }
 }

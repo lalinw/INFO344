@@ -51,7 +51,6 @@ function callStats() {
 //controls and calling the stats function 
 $(document).ready(function () {
     $('#run-button').click(function () {
-        console.log("clicked run button");
         $.ajax({
             type: "POST",
             url: "admin.asmx/startCrawling",
@@ -60,12 +59,10 @@ $(document).ready(function () {
                 console.log(msg);
             }
         });
-        alert("Crawler Started");
     });
 
 
     $('#stop-button').click(function() {
-        console.log("clicked stop button");
         $.ajax({
             type: "POST",
             url: "admin.asmx/stopCrawling",
@@ -74,11 +71,8 @@ $(document).ready(function () {
                 console.log(msg);
             }
         });
-        alert("Crawler is preparing to stop. Please wait.");
-    
     });
     $('#clear-button').click(function() {
-        console.log("clicked clear button");
         $.ajax({
             type: "POST",
             url: "admin.asmx/clearIndex",
@@ -87,7 +81,6 @@ $(document).ready(function () {
                 console.log(msg);
             }
         });
-        alert("Table Cleared, Queue Deleted and Counters reset");
     });
 
     $(function () {
@@ -95,7 +88,7 @@ $(document).ready(function () {
     });
 
     function makeStatsCall() {
-        setInterval(callStats, 500);
+        setInterval(callStats, 1000);
     }
 
     $('#find').click(function () {

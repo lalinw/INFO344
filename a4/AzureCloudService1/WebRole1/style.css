@@ -1,20 +1,52 @@
 ﻿body {
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+
+
+
+#logoandsearch {
+    padding-left: 5%;
+    padding-top: 30px;
+    padding-bottom: 10px;
+    background-color: lightgoldenrodyellow;
+}
+
+#submitbutton {
+    height: 35px;
+}
+
+#searchbar {
+    width: 85%;
+    height:35px;
 }
 
 #maincontent {
-    text-align: center;
-    margin-top: 300px;
+    padding-top: 20px;
+    width: 90%;
 }
 
-input {
-    width: 50%;
+#linkresult {
+    background-color: lightseagreen;
+    height: 50px;
+}
+
+#namecardresult {
+    background-color: deepskyblue;
+    height: 50px;
+    display: block;
+}
+
+#pname {
+    font-size
 }
 
 
-#res {
-    width: 50%;
-    margin-left: 25%;
-}
+
+
+
+
+
+
 
 div.sblock {
     border-style: solid;
@@ -29,3 +61,4 @@ div.sblock > div:hover {
 div.msg {
     color: gray;
 }
+

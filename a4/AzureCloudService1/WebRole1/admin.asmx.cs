@@ -42,7 +42,7 @@ namespace WebRole1
                 string cnnRobot = "http://www.cnn.com/robots.txt";
                 string bleacherRobot = "http://bleacherreport.com/robots.txt";
                 addToQueue(cnnRobot);
-                addToQueue(bleacherRobot);
+                //addToQueue(bleacherRobot);
                 resumeCrawling();
                 firstRun = false;
                 return "crawling started";
@@ -99,12 +99,16 @@ namespace WebRole1
             //stop the crawler and then delete
             CloudTable table = getTable();
             table.DeleteIfExists();
+            CloudTable tableError = errorTable();
+            tableError.DeleteIfExists();
             CloudQueue queue = getQueue();
             queue.Clear();
+            CloudQueue cmdQueue = getCommandQueue();
+            cmdQueue.Clear();
             //reset the crawler stats
             resetTableSize();
             resetTotalUrls();
-            return "table and queue and stats cleared";
+            return "table/error table and queue and stats cleared";
         }
 
         //pre:  takes an HTML link as a string
@@ -128,7 +132,35 @@ namespace WebRole1
             }
             return new JavaScriptSerializer().Serialize(title);
         }
-        
+
+
+        //I don't know what I'm doing FML
+        [WebMethod]
+        [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        public string getSearchResults(string url, string[] keyTitles)
+        {
+            string rowKey = createMD5(url);
+            CloudTable table = getTable();
+            //TableOperation retrieveOperation = TableOperation.Retrieve<Page>("title", rowKey);
+            List<Page> queryPages = new List<Page>();
+            foreach (string keyword in keyTitles) {
+                //var exQuery = new TableQuery<Page>().Where(TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, keyword));
+                //var resultstemp = table.ExecuteQuery(exQuery);
+                var thisQuery = table.CreateQuery<Page>().Where(e => e.PartitionKey == keyword).ToList();
+                queryPages.AddRange(thisQuery);
+            }
+            var rankedResults = queryPages
+                .GroupBy(x => x.RowKey)
+                .Select(x => new Tuple<string, int, string>(x.title, x.ToList().Count, x.url))
+                .OrberByDescending(x => x.Item2);
+            
+            //TableResult retrievedResult = table.Execute(retrieveOperation);
+            //Page results = (Page)retrievedResult.Result;
+
+            return new JavaScriptSerializer().Serialize(rankedResults);
+        }
+
+
         //pre:  takes a string
         //post: returns the MD5 hash version of the input
         private static string createMD5(string input)

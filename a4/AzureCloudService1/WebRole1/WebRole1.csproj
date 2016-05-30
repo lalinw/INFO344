@@ -160,7 +160,10 @@
   <ItemGroup>
     <Content Include="dashboard.html" />
     <Content Include="script.js" />
+    <Content Include="script_dashboard.js" />
     <Content Include="style.css" />
+    <Content Include="style_dashboard.css" />
+    <Content Include="style_nba.css" />
     <Content Include="Web.config" />
     <Content Include="admin.asmx" />
   </ItemGroup>
