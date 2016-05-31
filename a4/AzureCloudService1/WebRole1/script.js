@@ -28,6 +28,8 @@ function sendReq(prf) {
     });
 }
 
+
+
 //call sendReq() every time the input changes 
 $(document).ready(function () {
     $('#searchbar').on('input', function () {
@@ -68,3 +70,24 @@ function lookUp(userinput) {
         }
     });
 }
+
+function searchPage(userinput) {
+    $.ajax({
+        type: "POST",
+        url: "admin.asmx/getSearchResults",
+        contentType: "application/json; charset=utf-8",
+        data: JSON.stringify({ input: userinput }),
+        dataType: "json",
+        success: function (result) {
+            console.log('success');
+            console.log(result);
+
+            //var searchResults = JSON.parse(result.d);
+
+           
+        },
+        error: function (msg) {
+            console.log('error');
+        }
+    });
+};

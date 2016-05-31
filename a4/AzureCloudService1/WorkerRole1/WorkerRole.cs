@@ -31,15 +31,11 @@ namespace WorkerRole1
         //initialize the stats parameters for the tables and queues etc.
         public static List<string> lastTen = new List<string> { };
         public static List<string> tenErrors = new List<string> { };
-        public static int tableSize = 0;
-        public static int totalUrls = 0;
-        public static string workerState = "Idling";
         public static bool crawlYes = true;
 
         public override void Run()
         {
             CloudQueue queue = getQueue();
-            CloudTable table = getTable();
             CloudTable stat = statTable();
 
             //initialize the statTable
@@ -71,6 +67,11 @@ namespace WorkerRole1
                 }
             }
         }
+
+
+
+
+
 
         private string checkCmdQueue() {
             CloudQueue cmdQueue = getCommandQueue();
@@ -197,7 +198,7 @@ namespace WorkerRole1
 
             Uri linkUri = new Uri(link);
             //check for disallow paths 
-            if (linkUri.Host.EndsWith("cnn.com") && disallowList["www.cnn.com"] != null)
+            if (linkUri.Host.Contains("cnn.com") && disallowList["www.cnn.com"] != null)
             {
                 //if CNN, check for disallow for cnn
                 foreach (string disallowPath in disallowList["www.cnn.com"])
@@ -209,7 +210,7 @@ namespace WorkerRole1
                 }
                 return true;
             }
-            else if (linkUri.Host.EndsWith("bleacherreport.com"))
+            else if (linkUri.Host.Contains("bleacherreport.com"))
             {
                 if (!linkUri.AbsolutePath.StartsWith("/articles"))
                 {
@@ -229,7 +230,7 @@ namespace WorkerRole1
             }
             else
             {
-                return false;
+                return true;
             }
         }
 
@@ -255,6 +256,7 @@ namespace WorkerRole1
         //      add the new links to the queue
         private string parseHtml(string link) {
             updateWorkerState("Crawling");
+            checkCmdQueue();
             //remove disallowed ones
             //remove already visited ones 
             //put valid links in queue
@@ -275,26 +277,7 @@ namespace WorkerRole1
                         //cleaning the link in case of a request
                         link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath;
 
-                        /*
-                        var linkEnding = linkUri.Segments[linkUri.Segments.Length - 1];
-                        //cleaning the link, so it's easier to check for duplicates
-                        if (linkEnding.ToLower().Contains("index.html"))
-                        {
-                            link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath;
-                        }
-                        else if (linkEnding.ToLower().Contains("index.htm"))
-                        {
-                            link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath;
-                        }
-                        else if (!linkUri.Query.Equals("") || !linkEnding.Contains("."))
-                        {
-                            link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath + "/";
-                        }
-                        else if (!linkEnding.Contains(".") && !linkEnding.Contains("/"))
-                        {
-                            link = linkUri.Scheme + "://" + linkUri.Host + linkUri.AbsolutePath + "/";
-                        }
-                        */
+                       
 
                         if (Uri.IsWellFormedUriString(link, UriKind.Absolute))
                         {
@@ -329,6 +312,7 @@ namespace WorkerRole1
                                                 }
                                             }
                                         }
+                                        checkCmdQueue();
                                     }
 
                                 }
@@ -350,8 +334,8 @@ namespace WorkerRole1
             }
             catch (Exception e)
             {
-                string errmsg = e.Message;
-                addToErrorTable(link, errmsg);
+                //string errmsg = e.Message;
+                //addToErrorTable(link, errmsg);
                 visitedLinks.Add(link);
             }
             return "parsed HTML";
@@ -363,7 +347,7 @@ namespace WorkerRole1
         private string parseXml(string link) {
             updateWorkerState("Loading");
             Uri linkUri = new Uri(link);
-            if (linkUri.Host.EndsWith("cnn.com"))
+            if (linkUri.Host.Contains("cnn.com"))
             {
                 XElement xml = XElement.Load(link);
                 XName sitemap = XName.Get("sitemap", "http://www.sitemaps.org/schemas/sitemap/0.9");
@@ -387,6 +371,7 @@ namespace WorkerRole1
 
                 foreach (var smElement in top)
                 {
+                    checkCmdQueue();
                     DateTime dateOfLink = DateTime.Now;
                     if (smElement.Element(date) != null)
                     {
@@ -405,7 +390,7 @@ namespace WorkerRole1
                     }
                 }
             }
-            else if (linkUri.Host.EndsWith("bleacherreport.com"))
+            else if (linkUri.Host.Contains("bleacherreport.com"))
             {
                 XElement xml = XElement.Load(link);
                 XName url = XName.Get("url", "http://www.google.com/schemas/sitemap/0.9");
@@ -413,6 +398,7 @@ namespace WorkerRole1
                 var top = xml.Elements(url);
                 foreach (var smElement in top)
                 {
+                    checkCmdQueue();
                     var element = smElement.Element(loc).Value;
                     if (element.ToLower().EndsWith(".xml") && !visitedLinks.Contains(link))
                     {
@@ -426,6 +412,7 @@ namespace WorkerRole1
                     }
                 }
             }
+            visitedLinks.Add(link);
             return "parsed XML";
         }
 
@@ -442,6 +429,7 @@ namespace WorkerRole1
             Uri root = new Uri(robotLink);
             while (!reader.EndOfStream)
             {
+                checkCmdQueue();
                 string line = reader.ReadLine();
                 if (line.Contains("Sitemap"))
                 {
@@ -462,6 +450,7 @@ namespace WorkerRole1
                 }
             }
             disallowList.Add(root.Host, disallow);
+            visitedLinks.Add(robotLink);
             return "done with " + root.Host + " robots.txt";
         }
 
@@ -483,7 +472,8 @@ namespace WorkerRole1
 
         private string[] splitTitle(string pageTitle)
         {
-            string validChar = Regex.Replace(pageTitle, "[^0-9a-zA-Z ]+", "");
+            string lowercaseTitle = pageTitle.Trim().ToLower();
+            string validChar = Regex.Replace(lowercaseTitle, "[^0-9a-zA-Z ]+", "");
             string[] keyTitles = validChar.Split(' ');
             return keyTitles;
         }
@@ -496,13 +486,26 @@ namespace WorkerRole1
             string[] keyTitles = splitTitle(pageTitle);
             for (int i = 0; i < keyTitles.Length; i++)
             {
-                Page newEntity = new Page(url, pageTitle, keyTitles[i]);
-                TableOperation insertOperation = TableOperation.Insert(newEntity);
-                table.Execute(insertOperation);
-                updateTableSize();
+                string key = keyTitles[i].Trim();
+                if (key != "" && key != "cnncom" && key != "cnnpoliticscom") {
+                    Page newEntity = new Page(url, pageTitle, key);
+                    TableOperation insertOperation = TableOperation.Insert(newEntity);
+                    table.Execute(insertOperation);
+                }
             }
+            addToDashboardTable(url, pageTitle);
             updateLast10Links(url);
+            updateTableSize();
             return "add to table";
+        }
+
+        private string addToDashboardTable(string url, string pageTitle)
+        {
+            CloudTable table = dashboardTable();
+            Page newEntity = new Page(url, pageTitle, "titleDashboard");
+            TableOperation insertOperation = TableOperation.Insert(newEntity);
+            table.Execute(insertOperation);
+            return "add to dashboard table";
         }
 
         //pre:  take a link as string and a page title as string
@@ -511,13 +514,9 @@ namespace WorkerRole1
         {
             CloudTable table = errorTable();
             //add this one link to table
-            string[] keyTitles = splitTitle(pageTitle);
-            for (int i = 0; i < keyTitles.Length; i++)
-            {
-                Page newEntity = new Page(url, pageTitle, "error123456");
-                TableOperation insertOperation = TableOperation.Insert(newEntity);
-                table.Execute(insertOperation);
-            }
+            Page newEntity = new Page(url, pageTitle, "error123456");
+            TableOperation insertOperation = TableOperation.Insert(newEntity);
+            table.Execute(insertOperation);
             updateErrorLinks(url);
             return "add to error table";
         }
@@ -605,5 +604,16 @@ namespace WorkerRole1
             table.CreateIfNotExists();
             return table;
         }
+
+        private CloudTable dashboardTable()
+        {
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
+            CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
+            CloudTable table = tableClient.GetTableReference("dashboardtable");
+            table.CreateIfNotExists();
+            return table;
+        }
+
+  
     }
 }

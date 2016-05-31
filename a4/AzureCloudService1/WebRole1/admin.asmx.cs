@@ -42,7 +42,7 @@ namespace WebRole1
                 string cnnRobot = "http://www.cnn.com/robots.txt";
                 string bleacherRobot = "http://bleacherreport.com/robots.txt";
                 addToQueue(cnnRobot);
-                //addToQueue(bleacherRobot);
+                addToQueue(bleacherRobot);
                 resumeCrawling();
                 firstRun = false;
                 return "crawling started";
@@ -118,8 +118,8 @@ namespace WebRole1
         public string getPageTitle(string url)
         {
             string rowKey = createMD5(url);
-            CloudTable table = getTable();
-            TableOperation retrieveOperation = TableOperation.Retrieve<Page>("title", rowKey);
+            CloudTable table = dashboardTable();
+            TableOperation retrieveOperation = TableOperation.Retrieve<Page>("titleDashboard", rowKey);
             TableResult retrievedResult = table.Execute(retrieveOperation);
             Page results = (Page)retrievedResult.Result;
             string title;
@@ -137,9 +137,9 @@ namespace WebRole1
         //I don't know what I'm doing FML
         [WebMethod]
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
-        public string getSearchResults(string url, string[] keyTitles)
+        public string getSearchResults(string input)
         {
-            string rowKey = createMD5(url);
+            string[] keyTitles = input.Trim().ToLower().Split(' ');
             CloudTable table = getTable();
             //TableOperation retrieveOperation = TableOperation.Retrieve<Page>("title", rowKey);
             List<Page> queryPages = new List<Page>();
@@ -151,8 +151,9 @@ namespace WebRole1
             }
             var rankedResults = queryPages
                 .GroupBy(x => x.RowKey)
-                .Select(x => new Tuple<string, int, string>(x.title, x.ToList().Count, x.url))
-                .OrberByDescending(x => x.Item2);
+                .Select(x => new Tuple<string, int, string, string>(x.Key, x.ToList().Count, x.First().title, x.First().url))
+                .OrderByDescending(x => x.Item2)
+                .Take(1000);
             
             //TableResult retrievedResult = table.Execute(retrieveOperation);
             //Page results = (Page)retrievedResult.Result;
@@ -316,6 +317,14 @@ namespace WebRole1
             return table;
         }
 
+        private CloudTable dashboardTable()
+        {
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
+            CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
+            CloudTable table = tableClient.GetTableReference("dashboardtable");
+            table.CreateIfNotExists();
+            return table;
+        }
 
 
     }
