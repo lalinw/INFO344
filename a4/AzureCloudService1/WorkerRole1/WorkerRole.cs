@@ -32,7 +32,6 @@ namespace WorkerRole1
         public static List<string> lastTen = new List<string> { };
         public static List<string> tenErrors = new List<string> { };
         public static bool crawlYes = true;
-        public int countertemp = 0;
 
         public override void Run()
         {
@@ -53,9 +52,8 @@ namespace WorkerRole1
                         string link = retrievedMessage.AsString;
                         if (link.EndsWith("robots.txt")) {
                             parseRobot(link);
-                        } else if (link.EndsWith(".xml") && countertemp <= 2) {
+                        } else if (link.EndsWith(".xml")) {
                             parseXml(link);
-                            countertemp++;
                         } else {
                             parseHtml(link);
                         }

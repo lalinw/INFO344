@@ -82,6 +82,7 @@ namespace WebRole1
                     }
                 }
                 status = "Last word added: " + line + "; Total words: " + counter;  //just a report for the user, remove later
+                line = line.Replace("_", " ");
                 CloudTable stat = statTable();
                 Stats startStat = new Stats("trie", counter, line, "nothing", "nothing", 0);
                 TableOperation initializeStats = TableOperation.InsertOrReplace(startStat);

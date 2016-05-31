@@ -7,7 +7,7 @@ function callStats() {
         contentType: "application/json; charset=utf-8",
         dataType: "json",
         success: function (result) {
-            console.log('success');
+            //console.log('success');
 
             var stats = JSON.parse(result.d);
             //console.log(stats);
@@ -49,7 +49,7 @@ function callStats() {
             $('#lasttitle').html(stats[9]);
         },
         error: function (msg) {
-            console.log('error');
+            //console.log('error');
         }
     });
 };
@@ -63,7 +63,7 @@ $(document).ready(function () {
             url: "admin.asmx/startCrawling",
             contentType: "application/json; charset=utf-8",
             success: function (msg) {
-                console.log(msg);
+               //console.log(msg);
                 $('#graph').html("");
                 $('#graph').append("<img src=\"running.gif\"/>");
             }
@@ -78,7 +78,7 @@ $(document).ready(function () {
             url: "admin.asmx/stopCrawling",
             contentType: "application/json; charset=utf-8",
             success: function (msg) {
-                console.log(msg);
+                //console.log(msg);
                 $('#graph').html("");
                 $('#graph').append("<img src=\"stopped.gif\"/>");
             }
@@ -91,7 +91,7 @@ $(document).ready(function () {
             url: "admin.asmx/clearIndex",
             contentType: "application/json; charset=utf-8",
             success: function (msg) {
-                console.log(msg);
+                //console.log(msg);
                 $('#graph').html("");
                 $('#graph').append("<img src=\"stopped.gif\"/>");
             }
@@ -108,7 +108,7 @@ $(document).ready(function () {
 
     $('#find').click(function () {
         var theurl = $('#searchtitle').val().trim();
-        console.log('searching for title');
+        //console.log('searching for title');
         $.ajax({
             type: "POST",
             url: "admin.asmx/getPageTitle",
@@ -127,7 +127,7 @@ $(document).ready(function () {
     $('#dl-button').click(function () {
         $('#dl-button').addClass("disabled");
         consoleMsg("Downloading file...");
-        console.log("click dl");
+        //console.log("click dl");
         $.ajax({
             type: "POST",
             url: "getQuerySuggestions.asmx/downloadTitles",
@@ -145,7 +145,7 @@ $(document).ready(function () {
             url: "getQuerySuggestions.asmx/buildTrie",
             contentType: "application/json; charset=utf-8",
             success: function (msg) {
-               console.log("build success");
+               //console.log("build success");
                consoleMsg("Trie built!");
            }
         });

@@ -26,7 +26,7 @@ function sendReq(prf) {
         contentType: "application/json; charset=utf-8",
         dataType: "json",
         success: function (result) {
-            console.log(result.d);
+            //console.log(result.d);
             $('#suggestions').html(""); //clears the div
             var obj = JSON.parse(result.d);
             var cleanInput = prf.trim().toLowerCase();
@@ -46,7 +46,7 @@ function sendReq(prf) {
             }
         },
         error: function (msg) {
-            console.log('error');
+            //console.log('error');
         }
     });
     setTimeout(function () { $('.suggestionblock').fadeOut(500); }, 5000);
@@ -67,7 +67,7 @@ function searchFromSuggestions(input) {
 function lookUp(userinput) {
     var cleanInput = userinput.trim()
     var name = cleanInput.replace(" ", "+");
-    console.log(name);
+    //console.log(name);
     
     //turn "jeremy lin" to "jeremy+lin"
     $("#yousearched").html("");
@@ -82,7 +82,7 @@ function lookUp(userinput) {
         success: function (result) {
             $("#namecardresult").html("");
             var data = result[0];
-            console.log(data);
+            //console.log(data);
             if (data != null) {
                 var block = $("<div>").addClass("playerblock");
                 $("#namecardresult").append("<img class='profilepic' itemprop='image' src='http://i.cdn.turner.com/nba/nba/.element/img/2.0/sect/statscube/players/large/" + data.FirstName + "_" + data.LastName + ".png' onerror=\"this.onerror=null;" + "this.src='http://i.cdn.turner.com/nba/nba/.element/img/2.0/sect/statscube/players/large/default_nba_headshot_v2.png';\".>");
@@ -113,9 +113,9 @@ function searchPage(userinput) {
         dataType: "json",
         success: function (result) {
             $("#linkresult").html("");
-            console.log('success');
+            //console.log('success');
             var searchResults = JSON.parse(result.d);
-            console.log(searchResults);
+            //console.log(searchResults);
             var block = $("<div>");
             for (var i = 0; i < searchResults.length; i++) {
                 block.append("<div class='one-link-result'>");
@@ -129,7 +129,7 @@ function searchPage(userinput) {
             $("#linkresult").append(block);
         },
         error: function (msg) {
-            console.log('error');
+            //console.log('error');
         }
     });
 };
