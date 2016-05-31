@@ -147,6 +147,7 @@
     <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="favicon.ico" />
     <Content Include="graph_comingsoon.png" />
     <Content Include="index.html" />
     <Content Include="packages.config" />
@@ -160,11 +161,14 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="dashboard.html" />
+    <Content Include="running.gif" />
     <Content Include="script.js" />
     <Content Include="script_dashboard.js" />
+    <Content Include="stopped.gif" />
     <Content Include="style.css" />
     <Content Include="style_dashboard.css" />
     <Content Include="style_nba.css" />
+    <Content Include="theretriever.jpg" />
     <Content Include="Web.config" />
     <Content Include="admin.asmx" />
   </ItemGroup>

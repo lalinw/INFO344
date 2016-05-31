@@ -3,6 +3,7 @@
 $(document).ready(function () {
     $('#searchbar').on('input', function () {
         sendReq(this.value);
+        searchFromSuggestions(this.value);
     });
 
     $('#submitbutton').click(function () {
@@ -85,7 +86,7 @@ function lookUp(userinput) {
             //console.log(data);
             if (data != null) {
                 var block = $("<div>").addClass("playerblock");
-                $("#namecardresult").append("<img class='profilepic' itemprop='image' src='http://i.cdn.turner.com/nba/nba/.element/img/2.0/sect/statscube/players/large/" + data.FirstName + "_" + data.LastName + ".png' onerror=\"this.onerror=null;" + "this.src='http://i.cdn.turner.com/nba/nba/.element/img/2.0/sect/statscube/players/large/default_nba_headshot_v2.png';\".>");
+                $("#namecardresult").append("<img class='profilepic' width='230' itemprop='image' src='http://i.cdn.turner.com/nba/nba/.element/img/2.0/sect/statscube/players/large/" + data.FirstName + "_" + data.LastName + ".png' onerror=\"this.onerror=null;" + "this.src='http://i.cdn.turner.com/nba/nba/.element/img/2.0/sect/statscube/players/large/default_nba_headshot_v2.png';\".>");
                 block.append("<div id='pname'><h2>" + data.Name + " (" + data.Team +  ")</h2></div>");
                 block.append("<div class='mainstats' style='display: inline-block; padding-left: 5%; padding-right: 5%; text-align: center; padding-bottom:5%;'>" + "<span class='var'><h4>PPG</h4></span>" + "<span class='data'>" + data.PPG + "</span>" + "</div>");
                 block.append("<div class='mainstats' style='display: inline-block; padding-left: 5%; padding-right: 5%; text-align: center;padding-bottom:5%;'>" + "<span class='var'><h4>GP</h4></span>" + "<span class='data'>" + data.GP + "</span>" + "</div>");

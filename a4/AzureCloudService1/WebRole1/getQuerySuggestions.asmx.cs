@@ -15,9 +15,6 @@ using Microsoft.Azure;
 using Microsoft.WindowsAzure.Storage.Table;
 using System.Configuration;
 
-
-
-
 //
 //
 // HAVE TO CHANGE THE CODE OR STORAGE CONNECTION STRING SO THAT IT WORKS TOGETHER WITH PA3

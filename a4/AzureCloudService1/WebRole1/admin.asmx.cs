@@ -75,6 +75,7 @@ namespace WebRole1
         {
             CloudQueue cmd = getCommandQueue();
             cmd.AddMessage(new CloudQueueMessage("stop"));
+            cmd.AddMessage(new CloudQueueMessage("stop"));
             return "stopped crawling";
         }
 

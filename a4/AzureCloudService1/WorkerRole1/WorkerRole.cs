@@ -39,8 +39,21 @@ namespace WorkerRole1
             CloudTable stat = statTable();
 
             //initialize the statTable
-            Stats startStat = new Stats();
-            TableOperation initializeStats = TableOperation.InsertOrReplace(startStat);
+            //initialize the statTable
+            TableQuery<Stats> search = new TableQuery<Stats>().Where(
+               TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, "stats")
+            );
+            var result = stat.ExecuteQuery(search).ToList();
+            Stats retrieved = result[0];
+            TableOperation initializeStats;
+            if (retrieved.totalUrls > 0)
+            {
+                initializeStats = TableOperation.InsertOrReplace(retrieved);
+            }
+            else {
+                Stats startStat = new Stats();
+                initializeStats = TableOperation.InsertOrReplace(startStat);
+            }
             stat.Execute(initializeStats);
 
             while (true) {
@@ -261,8 +274,7 @@ namespace WorkerRole1
             //remove already visited ones 
             //put valid links in queue
             HtmlWeb web = new HtmlWeb();
-            try
-            {
+            
                 HtmlDocument doc = web.Load(link);
                 string title = doc.DocumentNode.SelectSingleNode("//head/title").InnerHtml;
 
@@ -331,13 +343,6 @@ namespace WorkerRole1
                         }
                     }
                 }
-            }
-            catch (Exception e)
-            {
-                string errmsg = e.Message;
-                addToErrorTable(link, errmsg);
-                visitedLinks.Add(link);
-            }
             return "parsed HTML";
         }
 
