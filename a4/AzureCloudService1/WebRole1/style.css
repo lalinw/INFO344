@@ -8,7 +8,6 @@
     padding-left: 5%;
     padding-top: 30px;
     padding-bottom: 10px;
-    background-color: lightgoldenrodyellow;
 }
 
 #submitbutton {
@@ -26,7 +25,7 @@
 }
 
 #linkresult {
-    background-color: lightseagreen;
+    background-color: whitesmoke;
     height: 50px;
 }
 
@@ -40,7 +39,18 @@
     font-size
 }
 
+.one-link-result {
+    padding-top: 20px;
+}
 
+.linkresult-title {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.linkresult-url {
+    color: brown;
+}
 
 
 

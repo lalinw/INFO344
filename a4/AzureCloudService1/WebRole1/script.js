@@ -38,6 +38,7 @@ $(document).ready(function () {
 
     $('#submitbutton').click(function () {
         lookUp($('#searchbar').val());
+        searchPage($('#searchbar').val());
     });
 });
 
@@ -61,12 +62,15 @@ function lookUp(userinput) {
             var data = result[0];
             console.log(data);
             //console.log(data.Name);
-            var block = $("<div>").addClass("playerblock");
-            $("#namecardresult").append("<img class='profilepic' itemprop='image' src='http://i.cdn.turner.com/nba/nba/.element/img/2.0/sect/statscube/players/large/" + data.FirstName + "_" + data.LastName + ".png' onerror=\"this.onerror=null;" + "this.src='http://i.cdn.turner.com/nba/nba/.element/img/2.0/sect/statscube/players/large/default_nba_headshot_v2.png';\".>");
-            block.append("<div id='pname'><h2>" + data.Name +"</h2></div>");
-            block.append("<div id='mainstats1'>" + "<span class='var'><h4>Team</h4></span>" + "<span class='data'>" + data.Team + "</span>" + "</div>");
-            block.append("<div id='mainstats2'>" + "<span class='var'><h4>GP</h4></span>" + "<span class='data'>" + data.GP + "</span>" + "</div>");
-            $("#namecardresult").append(block);
+            if (data != null) {
+                var block = $("<div>").addClass("playerblock");
+                $("#namecardresult").append("<img class='profilepic' itemprop='image' src='http://i.cdn.turner.com/nba/nba/.element/img/2.0/sect/statscube/players/large/" + data.FirstName + "_" + data.LastName + ".png' onerror=\"this.onerror=null;" + "this.src='http://i.cdn.turner.com/nba/nba/.element/img/2.0/sect/statscube/players/large/default_nba_headshot_v2.png';\".>");
+                block.append("<div id='pname'><h2>" + data.Name +"</h2></div>");
+                block.append("<div id='mainstats1'>" + "<span class='var'><h4>Team</h4></span>" + "<span class='data'>" + data.Team + "</span>" + "</div>");
+                block.append("<div id='mainstats2'>" + "<span class='var'><h4>GP</h4></span>" + "<span class='data'>" + data.GP + "</span>" + "</div>");
+                $("#namecardresult").append(block);
+            }
+            
         }
     });
 }
@@ -79,11 +83,22 @@ function searchPage(userinput) {
         data: JSON.stringify({ input: userinput }),
         dataType: "json",
         success: function (result) {
+            $("#linkresult").html("");
             console.log('success');
-            console.log(result);
+            var searchResults = JSON.parse(result.d);
+            console.log(searchResults);
+            var block = $("<div>");
+            for (var i = 0; i < searchResults.length; i++) {
+                block.append("<div class='one-link-result'>");
+                block.append("<div class='linkresult-title'>" + searchResults[i].Item3 + "</div>");
+                block.append("<div class='linkresult-url'>" + searchResults[i].Item4 + "</div>");
+                block.append("</div>");
+            }
 
-            //var searchResults = JSON.parse(result.d);
-
+            if (searchResults.length == 0) {
+                block.append("<div class='msg'><i>The Retriever couldn't find anything</i></div>");
+            }
+            $("#linkresult").append(block);
            
         },
         error: function (msg) {

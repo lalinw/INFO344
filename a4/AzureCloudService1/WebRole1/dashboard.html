@@ -10,13 +10,13 @@
     <script src="script_dashboard.js"></script>
 </head>
 <body>
-    <h1><b>Crawler Admin Dashboard</b></h1>
+    <img height="80px" src="theretriever.jpg" />
+    <h1 style="color:saddlebrown;"><b>Admin Dashboard</b></h1>
     <div class="status container">
-        <h2>Status</h2>
         <div class="row">
             <div class="col-sm-8">
                 <div id="graph">
-                    <img src="graph_comingsoon.png"/>
+                    <img src="notcominganymore.png"/>
                 </div>
                 
             </div>
@@ -54,13 +54,32 @@
             </div>
         </div>
     </div>
+    <div id="trie" class="container">
+        <div class="row">
+            <div class="col-sm-4 triestat">
+                <p>Titles Added to Trie</p>
+                <div id="titlescount"></div>
+            </div>
+            <div class="col-sm-4 triestat">
+                <p>Last Title added</p>
+                <div id="lasttitle"></div>
+            </div>
+            <div class="col-sm-4 triestat">
+                <button id="dl-button" class="btn btn-warning">Download File</button>
+                </br>
+                </br>
+                <button id="build-button" class="btn btn-info">Build Trie Tree</button>
+            </div>
+        </div>
+        <div id="triestatus"></div>
+    </div>
 
     <div class="search container">
         <div class="row">
             <div class="col-lg-12">
                 <div>
                     Search title by url: <input id="searchtitle" placeholder="http://www.cnn.com"/>
-                    <button id="find" class="btn btn-primary">Search</button>
+                    <button id="find" class="btn btn-default">Search</button>
                 </div>
                 <div id="results"></div>
             </div>

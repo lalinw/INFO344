@@ -108,6 +108,33 @@ $(document).ready(function () {
             }
         });
     });
+
+    $('#dl-button').click(function () {
+        $('#dl-button').addClass("disabled");
+        console.log("click dl");
+        //$.ajax({
+        //    type: "POST",
+        //    url: "getQuerySuggestions.asmx/download",
+        //    contentType: "application/json; charset=utf-8",
+        //    success: function (msg) {
+         //       console.log(msg);
+                
+         //   }
+        //});
+    });
+
+    $('#build-button').click(function () {
+        $('#build-button').addClass("disabled");
+        //$.ajax({
+        //    type: "POST",
+        //    url: "getQuerySuggestions.asmx/download",
+        //    contentType: "application/json; charset=utf-8",
+        //    success: function (msg) {
+        //       console.log(msg);
+
+        //   }
+        //});
+    });
     
 
 });
