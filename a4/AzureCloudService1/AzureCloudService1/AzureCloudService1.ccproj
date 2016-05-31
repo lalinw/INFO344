@@ -65,6 +65,7 @@
   </ItemGroup>
   <ItemGroup>
     <PublishProfile Include="Profiles\a3crawlerProduction.azurePubxml" />
+    <PublishProfile Include="Profiles\a3crawlerProduction1.azurePubxml" />
   </ItemGroup>
   <!-- Import the target files for this project template -->
   <PropertyGroup>

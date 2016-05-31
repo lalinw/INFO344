@@ -336,8 +336,8 @@ namespace WorkerRole1
             }
             catch (Exception e)
             {
-                //string errmsg = e.Message;
-                //addToErrorTable(link, errmsg);
+                string errmsg = e.Message;
+                addToErrorTable(link, errmsg);
                 visitedLinks.Add(link);
             }
             return "parsed HTML";

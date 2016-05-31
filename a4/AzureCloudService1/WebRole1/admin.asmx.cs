@@ -286,7 +286,7 @@ namespace WebRole1
             return "update tableSize";
         }
 
-        private string resetTableSize()
+        private string resetTrieWord()
         {
             CloudTable table = statTable();
             TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("trie", "this");
