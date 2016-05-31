@@ -45,7 +45,7 @@
 
 #namecardresult {
     background-color: none;
-   
+
 }
 
 
@@ -101,10 +101,4 @@ div.sblock > div:hover {
 
 div.msg {
     color: gray;
-}
-
-#mainstats1, #mainstats2 {
-    display: inline-block;
-    padding-left: 10%;
-    padding-right: 10%;
 }

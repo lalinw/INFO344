@@ -30,7 +30,7 @@ namespace WebRole1
     {
         
         public bool firstRun = true; 
-
+        public static Dictionary<string, Tuple<DateTime, List<Tuple<string, int, string, string>>>> cache;
 
         //pre:  takes no parameter
         //post: starts the crawler from 2 root sites' robots, CNN and BleacherReport
@@ -101,11 +101,14 @@ namespace WebRole1
             table.DeleteIfExists();
             CloudTable tableError = errorTable();
             tableError.DeleteIfExists();
+            CloudTable tableDashboard = dashboardTable();
+            tableDashboard.DeleteIfExists();
             CloudQueue queue = getQueue();
             queue.Clear();
             CloudQueue cmdQueue = getCommandQueue();
             cmdQueue.Clear();
             //reset the crawler stats
+            resetTrieWord();
             resetTableSize();
             resetTotalUrls();
             return "table/error table and queue and stats cleared";
@@ -139,13 +142,18 @@ namespace WebRole1
         [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
         public string getSearchResults(string input)
         {
+            if (cache == null)
+            {
+                cache = new Dictionary<string, Tuple<DateTime, List<Tuple<string, int, string, string>>>>();
+            }
+
+            if (cache.ContainsKey(input) && cache[input].Item1.AddMinutes(20) > DateTime.Now) {
+                return new JavaScriptSerializer().Serialize(cache[input].Item2); 
+            }
             string[] keyTitles = input.Trim().ToLower().Split(' ');
             CloudTable table = getTable();
-            //TableOperation retrieveOperation = TableOperation.Retrieve<Page>("title", rowKey);
             List<Page> queryPages = new List<Page>();
             foreach (string keyword in keyTitles) {
-                //var exQuery = new TableQuery<Page>().Where(TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, keyword));
-                //var resultstemp = table.ExecuteQuery(exQuery);
                 var thisQuery = table.CreateQuery<Page>().Where(e => e.PartitionKey == keyword).ToList();
                 queryPages.AddRange(thisQuery);
             }
@@ -154,9 +162,12 @@ namespace WebRole1
                 .Select(x => new Tuple<string, int, string, string>(x.Key, x.ToList().Count, x.First().title, x.First().url))
                 .OrderByDescending(x => x.Item2)
                 .Take(20);
-            
-            //TableResult retrievedResult = table.Execute(retrieveOperation);
-            //Page results = (Page)retrievedResult.Result;
+
+            if (!cache.ContainsKey(input) && rankedResults.ToList().Count > 0)
+            {
+                cache.Add(input, new Tuple<DateTime, List<Tuple<string, int, string, string>>>(DateTime.Now, rankedResults.ToList()));
+            }
+
 
             return new JavaScriptSerializer().Serialize(rankedResults);
         }
@@ -273,6 +284,20 @@ namespace WebRole1
             TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(updateEntity);
             table.Execute(insertOrReplaceOperation);
             return "update tableSize";
+        }
+
+        private string resetTableSize()
+        {
+            CloudTable table = statTable();
+            TableOperation retrieveOperation = TableOperation.Retrieve<Stats>("trie", "this");
+            TableResult retrievedResult = table.Execute(retrieveOperation);
+            Stats updateEntity = (Stats)retrievedResult.Result;
+            //update the column
+            updateEntity.tableSize = 0;
+            updateEntity.workerState = "Trie is not yet built";
+            TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(updateEntity);
+            table.Execute(insertOrReplaceOperation);
+            return "update Trie";
         }
 
         //post: resets the number of total urls found

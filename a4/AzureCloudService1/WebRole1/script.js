@@ -49,7 +49,7 @@ function sendReq(prf) {
             console.log('error');
         }
     });
-    setTimeout(function () { $('.suggestionblock').fadeOut(300); console.log("fading?") }, 3000);
+    setTimeout(function () { $('.suggestionblock').fadeOut(500); }, 5000);
     
 }
 
@@ -100,10 +100,9 @@ function lookUp(userinput) {
                 block.append("<div><b>FT: </b>" + data.M_FT + " (" + data.Pct_FT + "%)</div>");
                 $("#namecardresult").append(block);
             }
-            
         }
     });
-}s
+}
 
 function searchPage(userinput) {
     $.ajax({
