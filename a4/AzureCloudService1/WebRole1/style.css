@@ -8,6 +8,13 @@
     padding-left: 5%;
     padding-top: 30px;
     padding-bottom: 10px;
+    margin-top: 30%;
+    position: relative;
+}
+
+#logopic {
+    text-align: center;
+    position: relative;
 }
 
 #submitbutton {
@@ -22,22 +29,18 @@
 #maincontent {
     padding-top: 20px;
     width: 90%;
+    padding-bottom: 10%;
 }
 
 #linkresult {
-    background-color: whitesmoke;
-    height: 50px;
+    background-color: none;
 }
 
 #namecardresult {
-    background-color: deepskyblue;
-    height: 50px;
-    display: block;
+    background-color: none;
+   
 }
 
-#pname {
-    font-size
-}
 
 .one-link-result {
     padding-top: 20px;
@@ -48,10 +51,26 @@
     font-weight: bold;
 }
 
-.linkresult-url {
-    color: brown;
+a {
+    color: black;
+
+}
+a:link {
+    text-decoration: none;
+}
+a:visited {
+    text-decoration: none;
+}
+a:hover {
+    text-decoration-color: sandybrown;
+}
+a:active {
+    text-decoration: none ;
 }
 
+.linkresult-url {
+    color: green;
+}
 
 
 
@@ -71,4 +90,5 @@ div.sblock > div:hover {
 div.msg {
     color: gray;
 }
+
 

@@ -32,14 +32,23 @@ function sendReq(prf) {
 
 //call sendReq() every time the input changes 
 $(document).ready(function () {
+    var firstSearch = true;
+
+
     $('#searchbar').on('input', function () {
         //sendReq(this.value);
     });
 
     $('#submitbutton').click(function () {
+        if (firstSearch) {
+            $("#logoandsearch").animate({ marginTop: "-=30%" }, 750, "swing", function () { });
+            firstSearch = false;
+        }
         lookUp($('#searchbar').val());
         searchPage($('#searchbar').val());
     });
+
+    
 });
 
 function lookUp(userinput) {
@@ -61,7 +70,6 @@ function lookUp(userinput) {
             $("#namecardresult").html("");
             var data = result[0];
             console.log(data);
-            //console.log(data.Name);
             if (data != null) {
                 var block = $("<div>").addClass("playerblock");
                 $("#namecardresult").append("<img class='profilepic' itemprop='image' src='http://i.cdn.turner.com/nba/nba/.element/img/2.0/sect/statscube/players/large/" + data.FirstName + "_" + data.LastName + ".png' onerror=\"this.onerror=null;" + "this.src='http://i.cdn.turner.com/nba/nba/.element/img/2.0/sect/statscube/players/large/default_nba_headshot_v2.png';\".>");
@@ -90,16 +98,14 @@ function searchPage(userinput) {
             var block = $("<div>");
             for (var i = 0; i < searchResults.length; i++) {
                 block.append("<div class='one-link-result'>");
-                block.append("<div class='linkresult-title'>" + searchResults[i].Item3 + "</div>");
+                block.append("<div class='linkresult-title'><a href=" + searchResults[i].Item4 + ">" + searchResults[i].Item3 + "</a></div>");
                 block.append("<div class='linkresult-url'>" + searchResults[i].Item4 + "</div>");
                 block.append("</div>");
             }
-
             if (searchResults.length == 0) {
-                block.append("<div class='msg'><i>The Retriever couldn't find anything</i></div>");
+                block.append("<div class='msg'><i>No relevant pages to retrieve</i></div>");
             }
             $("#linkresult").append(block);
-           
         },
         error: function (msg) {
             console.log('error');

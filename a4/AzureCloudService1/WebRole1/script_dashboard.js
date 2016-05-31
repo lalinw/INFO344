@@ -51,6 +51,7 @@ function callStats() {
 //controls and calling the stats function 
 $(document).ready(function () {
     $('#run-button').click(function () {
+        consoleMsg("Running the crawler...");
         $.ajax({
             type: "POST",
             url: "admin.asmx/startCrawling",
@@ -62,7 +63,8 @@ $(document).ready(function () {
     });
 
 
-    $('#stop-button').click(function() {
+    $('#stop-button').click(function () {
+        consoleMsg("Crawler stopping...");
         $.ajax({
             type: "POST",
             url: "admin.asmx/stopCrawling",
@@ -72,7 +74,8 @@ $(document).ready(function () {
             }
         });
     });
-    $('#clear-button').click(function() {
+    $('#clear-button').click(function () {
+        consoleMsg("Index Cleared!");
         $.ajax({
             type: "POST",
             url: "admin.asmx/clearIndex",
@@ -111,6 +114,8 @@ $(document).ready(function () {
 
     $('#dl-button').click(function () {
         $('#dl-button').addClass("disabled");
+        consoleMsg("Downloading file...");
+        
         console.log("click dl");
         //$.ajax({
         //    type: "POST",
@@ -125,6 +130,7 @@ $(document).ready(function () {
 
     $('#build-button').click(function () {
         $('#build-button').addClass("disabled");
+        consoleMsg("Building Trie...");
         //$.ajax({
         //    type: "POST",
         //    url: "getQuerySuggestions.asmx/download",
@@ -138,3 +144,10 @@ $(document).ready(function () {
     
 
 });
+
+function consoleMsg(msg) {
+    $('#console-box').html("");
+    $('#console-box').append("<div id='console-msg'>" + msg + "</div>");
+    $('#console-box').fadeIn(750);
+    setTimeout(function () { $('#console-box').fadeOut(750); }, 3000);
+}

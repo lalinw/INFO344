@@ -4,7 +4,7 @@
     margin-top: 100px;
 }
 
-div.links > div > div > div {
+div.links > div > div {
     text-align: left;
 }
 
@@ -31,5 +31,25 @@ div#results {
 }
 
 #trie {
-    background-color:beige;
+    background-color:aliceblue;
+}
+
+#console-box {
+    background-color:lightgoldenrodyellow;
+    display: none;
+    position: fixed;
+    top: 45%;
+    left: 30%;
+    width: 40%;
+    height: 15%;
+    opacity: 0.9;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 20px;
+}
+
+#console-msg {
+    vertical-align: middle;
+    position:relative;
+    top: 40%
 }
