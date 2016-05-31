@@ -82,10 +82,7 @@ namespace WorkerRole1
         }
 
 
-
-
-
-
+        //post: checks the command queue for commands
         private string checkCmdQueue() {
             CloudQueue cmdQueue = getCommandQueue();
             //check for command
