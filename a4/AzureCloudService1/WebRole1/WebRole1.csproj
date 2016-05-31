@@ -150,6 +150,7 @@
     <Content Include="graph_comingsoon.png" />
     <Content Include="index.html" />
     <Content Include="packages.config" />
+    <Content Include="getQuerySuggestions.asmx" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -169,6 +170,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="getQuerySuggestions.asmx.cs">
+      <DependentUpon>getQuerySuggestions.asmx</DependentUpon>
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />

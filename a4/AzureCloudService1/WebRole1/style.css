@@ -6,9 +6,8 @@
 
 #logoandsearch {
     padding-left: 5%;
-    padding-top: 30px;
     padding-bottom: 10px;
-    margin-top: 30%;
+    padding-top: 30%;
     position: relative;
 }
 
@@ -24,6 +23,14 @@
 #searchbar {
     width: 85%;
     height:35px;
+}
+#suggestions {
+    width: 81%;
+    border:none;
+    display: block;
+    position: absolute;
+    background-color: white;
+    z-index: 10;
 }
 
 #maincontent {
@@ -53,7 +60,6 @@
 
 a {
     color: black;
-
 }
 a:link {
     text-decoration: none;
@@ -62,7 +68,8 @@ a:visited {
     text-decoration: none;
 }
 a:hover {
-    text-decoration-color: sandybrown;
+    color: chocolate;
+    cursor: pointer;
 }
 a:active {
     text-decoration: none ;
@@ -73,22 +80,31 @@ a:active {
 }
 
 
-
+div.suggested:hover, div.suggested:active, button:hover  {
+    cursor: pointer;
+}
 
 
 
 div.sblock {
     border-style: solid;
     border-width: 1px;
-    border-color: lightgrey;
+    border-left-color: lightgrey;
+    border-right-color: lightgrey;
+    border-top: none;
+    border-bottom-color: lightgrey;
 }
 
 div.sblock > div:hover {
-    background-color: aliceblue;
+    background-color: lightgoldenrodyellow;
 }
 
 div.msg {
     color: gray;
 }
 
-
+#mainstats1, #mainstats2 {
+    display: inline-block;
+    padding-left: 10%;
+    padding-right: 10%;
+}

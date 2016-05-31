@@ -11,13 +11,17 @@ function callStats() {
 
             var stats = JSON.parse(result.d);
             //console.log(stats);
-
+            if (stats[0] == "Loading" || stats[0] == "Crawling") {
+                $('#graph').html("");
+                $('#graph').append("<img src=\"running.gif\"/>");
+            }
             $('#state').html(stats[0]);
             $('#cpu').html(stats[1]);
             $('#ram').html(stats[2] + " MB");
             $('#linksinqueue').html(stats[3]);
             $('#tablesize').html(stats[4]);
             $('#totalurls').html(stats[5]);
+            
             
             //last 10 links
             $('#tenlinks').html("");
@@ -41,6 +45,8 @@ function callStats() {
             if (errorStr != "") {
                 $('#errorlinks').append(err);
             }
+            $('#titlescount').html(stats[8]);
+            $('#lasttitle').html(stats[9]);
         },
         error: function (msg) {
             console.log('error');
@@ -58,6 +64,8 @@ $(document).ready(function () {
             contentType: "application/json; charset=utf-8",
             success: function (msg) {
                 console.log(msg);
+                $('#graph').html("");
+                $('#graph').append("<img src=\"running.gif\"/>");
             }
         });
     });
@@ -71,6 +79,8 @@ $(document).ready(function () {
             contentType: "application/json; charset=utf-8",
             success: function (msg) {
                 console.log(msg);
+                $('#graph').html("");
+                $('#graph').append("<img src=\"stopped.gif\"/>");
             }
         });
     });
@@ -82,12 +92,14 @@ $(document).ready(function () {
             contentType: "application/json; charset=utf-8",
             success: function (msg) {
                 console.log(msg);
+                $('#graph').html("");
+                $('#graph').append("<img src=\"stopped.gif\"/>");
             }
         });
     });
 
     $(function () {
-        setTimeout(makeStatsCall, 2000);
+        setTimeout(makeStatsCall, 1000);
     });
 
     function makeStatsCall() {
@@ -115,31 +127,28 @@ $(document).ready(function () {
     $('#dl-button').click(function () {
         $('#dl-button').addClass("disabled");
         consoleMsg("Downloading file...");
-        
         console.log("click dl");
-        //$.ajax({
-        //    type: "POST",
-        //    url: "getQuerySuggestions.asmx/download",
-        //    contentType: "application/json; charset=utf-8",
-        //    success: function (msg) {
-         //       console.log(msg);
-                
-         //   }
-        //});
+        $.ajax({
+            type: "POST",
+            url: "getQuerySuggestions.asmx/downloadTitles",
+            contentType: "application/json; charset=utf-8",
+            success: function (msg) {
+                consoleMsg(msg.d);
+            }
+       });
     });
 
     $('#build-button').click(function () {
-        $('#build-button').addClass("disabled");
         consoleMsg("Building Trie...");
-        //$.ajax({
-        //    type: "POST",
-        //    url: "getQuerySuggestions.asmx/download",
-        //    contentType: "application/json; charset=utf-8",
-        //    success: function (msg) {
-        //       console.log(msg);
-
-        //   }
-        //});
+        $.ajax({
+            type: "POST",
+            url: "getQuerySuggestions.asmx/buildTrie",
+            contentType: "application/json; charset=utf-8",
+            success: function (msg) {
+               console.log("build success");
+               consoleMsg("Trie built!");
+           }
+        });
     });
     
 
@@ -149,5 +158,5 @@ function consoleMsg(msg) {
     $('#console-box').html("");
     $('#console-box').append("<div id='console-msg'>" + msg + "</div>");
     $('#console-box').fadeIn(750);
-    setTimeout(function () { $('#console-box').fadeOut(750); }, 3000);
+    setTimeout(function () { $('#console-box').fadeOut(750); }, 2500);
 }

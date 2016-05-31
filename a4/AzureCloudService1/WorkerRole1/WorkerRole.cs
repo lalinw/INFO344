@@ -487,7 +487,10 @@ namespace WorkerRole1
             for (int i = 0; i < keyTitles.Length; i++)
             {
                 string key = keyTitles[i].Trim();
-                if (key != "" && key != "cnncom" && key != "cnnpoliticscom") {
+                if (key != "") {
+                    if (key == "cnncom" || key == "cnnpoliticscom") {
+                        key = "cnn";
+                    }
                     Page newEntity = new Page(url, pageTitle, key);
                     TableOperation insertOperation = TableOperation.Insert(newEntity);
                     table.Execute(insertOperation);

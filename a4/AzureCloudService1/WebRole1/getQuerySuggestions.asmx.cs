@@ -12,6 +12,8 @@ using System.Web.Script.Services;
 using System.Web.Services;
 using ClassLibrary1;
 using Microsoft.Azure;
+using Microsoft.WindowsAzure.Storage.Table;
+using System.Configuration;
 
 
 
@@ -80,6 +82,10 @@ namespace WebRole1
                     }
                 }
                 status = "Last word added: " + line + "; Total words: " + counter;  //just a report for the user, remove later
+                CloudTable stat = statTable();
+                Stats startStat = new Stats("trie", counter, line, "nothing", "nothing", 0);
+                TableOperation initializeStats = TableOperation.InsertOrReplace(startStat);
+                stat.Execute(initializeStats);
             }
             return status;
         }
@@ -138,6 +144,15 @@ namespace WebRole1
                 }
                 return suggestions;
             }
+        }
+
+        private CloudTable statTable()
+        {
+            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(ConfigurationManager.AppSettings["StorageConnectionString"]);
+            CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
+            CloudTable table = tableClient.GetTableReference("stattable");
+            table.CreateIfNotExists();
+            return table;
         }
 
     }

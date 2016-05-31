@@ -153,7 +153,7 @@ namespace WebRole1
                 .GroupBy(x => x.RowKey)
                 .Select(x => new Tuple<string, int, string, string>(x.Key, x.ToList().Count, x.First().title, x.First().url))
                 .OrderByDescending(x => x.Item2)
-                .Take(1000);
+                .Take(20);
             
             //TableResult retrievedResult = table.Execute(retrieveOperation);
             //Page results = (Page)retrievedResult.Result;
@@ -226,6 +226,22 @@ namespace WebRole1
                 errors = "";
             }
 
+            TableOperation retrieveOperation2 = TableOperation.Retrieve<Stats>("trie", "this");
+            TableResult retrievedResult2 = stat.Execute(retrieveOperation2);
+            Stats results2 = (Stats)retrievedResult2.Result;
+            string trieword;
+            string triesize;
+
+            try
+            {
+                triesize = "" + results2.tableSize;
+                trieword = results2.workerState;
+            }
+            catch {
+                triesize = "0";
+                trieword = "Trie is not yet built";
+            }
+
             //size of queue, size of index(table of crawled data)
             CloudQueue queue = getQueue();
             queue.FetchAttributes();
@@ -240,6 +256,8 @@ namespace WebRole1
             stats.Add(totalurls);
             stats.Add(lastCrawled);
             stats.Add(errors);
+            stats.Add(triesize);
+            stats.Add(trieword);
             return new JavaScriptSerializer().Serialize(stats); 
         }
 

@@ -30,9 +30,9 @@ namespace ClassLibrary1
             this.totalUrls = 0;
         }
 
-        public Stats(int tableSize, string workerState, string lastTen, string errors, int total)
+        public Stats(string stat, int tableSize, string workerState, string lastTen, string errors, int total)
         {
-            this.PartitionKey = "stats";
+            this.PartitionKey = stat;
             this.RowKey = "this";
             this.tableSize = tableSize;
             this.workerState = workerState;

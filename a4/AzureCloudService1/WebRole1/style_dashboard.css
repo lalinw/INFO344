@@ -17,7 +17,7 @@ div.links > div > div {
     padding: 0px 10px 25px 10px;
 }
 
-div.statbox > div {
+div.statbox > div, div.triestat > div {
     font-size: 25px;
 }
 
@@ -51,5 +51,5 @@ div#results {
 #console-msg {
     vertical-align: middle;
     position:relative;
-    top: 40%
+    top: 40%;
 }
