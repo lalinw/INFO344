@@ -56,6 +56,15 @@ function callStats() {
 
 //controls and calling the stats function 
 $(document).ready(function () {
+    $.ajax({
+        type: "POST",
+        url: "getQuerySuggestions.asmx/checkTrie",
+        contentType: "application/json; charset=utf-8",
+        success: function (msg) {
+            console.log('checking trie');
+        }
+    });
+
     $('#run-button').click(function () {
         consoleMsg("Running the crawler...");
         $.ajax({

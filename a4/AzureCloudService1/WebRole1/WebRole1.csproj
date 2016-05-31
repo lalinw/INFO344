@@ -167,7 +167,6 @@
     <Content Include="stopped.gif" />
     <Content Include="style.css" />
     <Content Include="style_dashboard.css" />
-    <Content Include="style_nba.css" />
     <Content Include="theretriever.jpg" />
     <Content Include="Web.config" />
     <Content Include="admin.asmx" />

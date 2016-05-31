@@ -211,7 +211,7 @@ namespace WorkerRole1
 
             Uri linkUri = new Uri(link);
             //check for disallow paths 
-            if (linkUri.Host.Contains("cnn.com") && disallowList["www.cnn.com"] != null)
+            if (linkUri.Host.Contains("cnn.com") && disallowList.ContainsKey("www.cnn.com"))
             {
                 //if CNN, check for disallow for cnn
                 foreach (string disallowPath in disallowList["www.cnn.com"])
@@ -274,9 +274,19 @@ namespace WorkerRole1
             //remove already visited ones 
             //put valid links in queue
             HtmlWeb web = new HtmlWeb();
-            
-                HtmlDocument doc = web.Load(link);
-                string title = doc.DocumentNode.SelectSingleNode("//head/title").InnerHtml;
+
+            string title;
+            HtmlDocument doc;
+            try {
+                doc = web.Load(link);
+                title = doc.DocumentNode.SelectSingleNode("//head/title").InnerHtml;
+            }
+            catch (Exception e) {
+                string errmsg = e.Message;
+                addToErrorTable(link, errmsg);
+                visitedLinks.Add(link);
+                return "parse html error";
+            }
 
                 if (!title.Equals(""))
                 {
@@ -343,6 +353,7 @@ namespace WorkerRole1
                         }
                     }
                 }
+            
             return "parsed HTML";
         }
 
@@ -360,7 +371,7 @@ namespace WorkerRole1
                 XName loc = XName.Get("loc", "http://www.sitemaps.org/schemas/sitemap/0.9");
                 XName date = XName.Get("lastmod", "http://www.sitemaps.org/schemas/sitemap/0.9");
                 XName date2 = XName.Get("publication_date", "http://www.sitemaps.org/schemas/sitemap/0.9");
-                DateTime cutoffTime = new DateTime(2016, 3, 1);
+
 
                 var top = xml.Elements(url);
                 if (xml.Elements(url).Count() == 0)
@@ -386,7 +397,8 @@ namespace WorkerRole1
                     {
                         dateOfLink = Convert.ToDateTime(smElement.Element(date2).Value);
                     }
-                    if (dateOfLink.CompareTo(cutoffTime) >= 0)
+
+                    if (dateOfLink.AddMonths(3) > DateTime.Now)
                     {
                         var element = smElement.Element(loc).Value;
                         if (!visitedLinks.Contains(link)) {

@@ -51,6 +51,18 @@ namespace WebRole1
             return "Download successful!";
         }
 
+        [WebMethod]
+        public string checkTrie()
+        {
+            if (trie.overallRoot.dict.Keys.Count < 1) {
+                CloudTable stat = statTable();
+                Stats startStat = new Stats("trie", 0, "Trie is not yet Built", "nothing", "nothing", 0);
+                TableOperation initializeStats = TableOperation.InsertOrReplace(startStat);
+                stat.Execute(initializeStats);
+            }
+            return "Trie checked";
+        }
+
         //  builds a trie from an empty trie object
         //  resets the trie before building
         //pre:  takes no parameter
