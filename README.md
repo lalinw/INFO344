@@ -5,7 +5,7 @@
 
 Hosted on AWS, RDS; in PHP, Javascript, HTML/CSS;
 
-ec2-52-38-84-159.us-west-2.compute.amazonaws.com
+ec2-52-38-84-159.us-west-2.compute.amazonaws.com (expired)
 
 **Assignment #02**
 
